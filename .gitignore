@@ -3,10 +3,15 @@ node_modules/
 
 # Environment Variables
 .env
+.env.*
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+server/.env
+client/.env
+!.env.example
+!.env.sample
 
 # Logs
 logs/
@@ -40,4 +45,4 @@ build/
 .cache/
 
 # Package lock (optional - keep if working in team)
-# package-lock.json
+ package-lock.json

@@ -7,6 +7,8 @@ dist/
 # Environment Variables
 .env
 .env.*
+!.env.example
+!.env.sample
 
 # Logs
 *.log
