@@ -25,16 +25,17 @@ const userSchema = new mongoose.Schema(
       ],
     },
 
-    phone: {
-      type: String,
-      trim: true,
-      default: "",
-    },
+  phone: {
+  type: String,
+  required: true,
+  unique: true,
+  trim: true,
+},
 
     password: {
       type: String,
       required: [true, "Password is required"],
-      minlength: [6, "Password must be at least 6 characters"],
+      minlength: [8, "Password must be at least 6 characters"],
       select: false,
     },
 
@@ -256,7 +257,7 @@ userSchema.pre("save", async function () {
   if (!this.isNew) {
     this.passwordChangedAt = new Date(Date.now() - 1000);
   }
-});
+}); 
 
 
 userSchema.methods.comparePassword = async function (enteredPassword) {
