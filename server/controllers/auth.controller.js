@@ -18,9 +18,7 @@ const cookieOptions = {
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
-/**
- * Register User
- */
+
 export const register = asyncHandler(async (req, res) => {
   let user;
   let token;
@@ -50,9 +48,7 @@ export const register = asyncHandler(async (req, res) => {
   }
 });
 
-/**
- * Login User
- */
+
 export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
@@ -73,9 +69,6 @@ export const login = asyncHandler(async (req, res) => {
     );
 });
 
-/**
- * Logout User
- */
 export const logout = asyncHandler(async (req, res) => {
   await logoutUser();
 
@@ -90,9 +83,7 @@ export const logout = asyncHandler(async (req, res) => {
     );
 });
 
-/**
- * Get Logged-in User Profile
- */
+
 export const getMe = asyncHandler(async (req, res) => {
   const user = await getProfile(req.user.id);
 
@@ -105,9 +96,7 @@ export const getMe = asyncHandler(async (req, res) => {
   );
 });
 
-/**
- * Update Profile
- */
+
 export const updateMe = asyncHandler(async (req, res) => {
   const user = await updateProfile(req.user.id, req.body);
 
@@ -120,9 +109,7 @@ export const updateMe = asyncHandler(async (req, res) => {
   );
 });
 
-/**
- * Change Password
- */
+
 export const updateMyPassword = asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
 
