@@ -1,3 +1,5 @@
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -8,6 +10,11 @@ import errorMiddleware from "./middleware/error.middleware.js";
 import authRoutes from "./routes/auth.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import workRequestRoutes from "./routes/workRequest.routes.js";
+import uploadRoutes from "./routes/upload.routes.js";
+
+dotenv.config({
+  path: fileURLToPath(new URL("./.env", import.meta.url)),
+});
 
 const app = express();
 // Middlewares
@@ -26,6 +33,7 @@ app.use("/api/health", healthRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/categories", categoryRoutes);
 app.use("/api/v1/work-requests", workRequestRoutes);
+app.use("/api/v1/upload", uploadRoutes);
 app.use(errorMiddleware);
 
 export default app;

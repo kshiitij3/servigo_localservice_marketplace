@@ -141,8 +141,8 @@ export const createWorkRequestValidation = [
 
   body("media")
     .optional()
-    .isArray()
-    .withMessage("Media must be an array"),
+    .isArray({ max: 5 })
+    .withMessage("You can upload maximum 5 files"),
 
   body("media.*.url")
     .optional()
