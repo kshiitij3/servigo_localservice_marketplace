@@ -1,0 +1,34 @@
+import User from "../models/User.js";
+import ApiError from "../utils/ApiError.js";
+
+export const updateAvailability = async (
+  professionalId,
+  availabilityStatus
+) => {
+  const professional = await User.findOneAndUpdate(
+    {
+      _id: professionalId,
+      role: "professional",
+      isActive: true,
+    },
+    {
+      $set: {
+        "professionalProfile.availabilityStatus":
+          availabilityStatus,
+      },
+    },
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+
+  if (!professional) {
+    throw new ApiError(
+      404,
+      "Professional not found or inactive"
+    );
+  }
+
+  return professional;
+};

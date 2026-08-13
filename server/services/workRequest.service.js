@@ -209,11 +209,11 @@ export const updateWorkRequest = async (
 
   }
 
-  if (updateData.category) {
+  if (updateData.category || updateData.customCategory !== undefined) {
 
     await validateCategory(
-      updateData.category,
-      updateData.customCategory
+      updateData.category || workRequest.category,
+      updateData.customCategory ?? workRequest.customCategory
     );
 
   }
@@ -224,10 +224,20 @@ export const updateWorkRequest = async (
 
   }
 
-  Object.assign(
-    workRequest,
-    updateData
-  );
+  const allowedFields = [
+    "title",
+    "description",
+    "category",
+    "customCategory",
+    "isUrgent",
+    "visibilityRadius",
+  ];
+
+  for (const field of allowedFields) {
+    if (updateData[field] !== undefined) {
+      workRequest[field] = updateData[field];
+    }
+  }
 
   await workRequest.save();
 
@@ -286,6 +296,15 @@ export const getNearbyWorkRequests = async (
   latitude,
   categoryIds = []
 ) => {
+
+  if (
+    !Number.isFinite(longitude) ||
+    !Number.isFinite(latitude) ||
+    longitude < -180 || longitude > 180 ||
+    latitude < -90 || latitude > 90
+  ) {
+    throw new ApiError(400, "Valid longitude and latitude are required");
+  }
 
   const query = {
 

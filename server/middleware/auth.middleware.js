@@ -10,11 +10,26 @@ const protect = asyncHandler(async (req, res, next) => {
     throw new ApiError(401, "Not authorized, no token provided");
   }
 
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (error) {
+    throw new ApiError(
+      401,
+      error.name === "TokenExpiredError"
+        ? "Token has expired"
+        : "Invalid authentication token"
+    );
+  }
+
   const user = await User.findById(decoded.id).select("-password");
 
   if (!user) {
     throw new ApiError(401, "User not found");
+  }
+
+  if (user.changedPasswordAfter?.(decoded.iat)) {
+    throw new ApiError(401, "Password was changed; please log in again");
   }
 
   req.user = user;

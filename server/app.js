@@ -11,6 +11,8 @@ import authRoutes from "./routes/auth.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import workRequestRoutes from "./routes/workRequest.routes.js";
 import uploadRoutes from "./routes/upload.routes.js";
+import quoteRoutes from "./routes/quote.route.js";
+import professionalRoutes from "./routes/professional.routes.js";
 
 dotenv.config({
   path: fileURLToPath(new URL("./.env", import.meta.url)),
@@ -34,6 +36,8 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/categories", categoryRoutes);
 app.use("/api/v1/work-requests", workRequestRoutes);
 app.use("/api/v1/upload", uploadRoutes);
+app.use("/api/v1/quotes", quoteRoutes);
+app.use("/api/v1/professionals", professionalRoutes);
 app.use(errorMiddleware);
 
 export default app;

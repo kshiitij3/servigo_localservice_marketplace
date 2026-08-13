@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 
 const quoteSchema = new mongoose.Schema(
   {
-
     workRequest: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "WorkRequest",
@@ -24,16 +23,18 @@ const quoteSchema = new mongoose.Schema(
       index: true,
     },
 
+    // Original amount proposed by professional
     initialAmount: {
       type: Number,
       required: [true, "Quote amount is required"],
-      min: [0, "Quote amount cannot be negative"],
+      min: [1, "Quote amount must be greater than 0"],
     },
 
+    // Current amount after negotiation
     amount: {
       type: Number,
       required: [true, "Current quote amount is required"],
-      min: [0, "Quote amount cannot be negative"],
+      min: [1, "Quote amount must be greater than 0"],
     },
 
     message: {
@@ -84,12 +85,13 @@ const quoteSchema = new mongoose.Schema(
       index: true,
     },
 
+    // Stores previous quote versions
     revisions: [
       {
         amount: {
           type: Number,
           required: true,
-          min: 0,
+          min: 1,
         },
 
         message: {
@@ -110,6 +112,12 @@ const quoteSchema = new mongoose.Schema(
       default: null,
     },
 
+    // CHANGED: track when customer responds
+    respondedAt: {
+      type: Date,
+      default: null,
+    },
+
     expiresAt: {
       type: Date,
       default: null,
@@ -121,10 +129,8 @@ const quoteSchema = new mongoose.Schema(
 );
 
 
-// A professional cannot create multiple separate
-// quotes for the same work request.
-//
-// They should update/revise the existing quote.
+// A professional can have only ONE quote
+// for a particular work request.
 quoteSchema.index(
   {
     workRequest: 1,
@@ -135,15 +141,24 @@ quoteSchema.index(
   }
 );
 
-// Helps when customer requests:
-// "Show all quotes for this work sorted by price"
+
+// Customer can get quotes sorted by price.
 quoteSchema.index({
   workRequest: 1,
   amount: 1,
 });
 
+
+// Professional's quote history.
 quoteSchema.index({
   professional: 1,
+  createdAt: -1,
+});
+
+
+// Customer's quote history.
+quoteSchema.index({
+  customer: 1,
   createdAt: -1,
 });
 

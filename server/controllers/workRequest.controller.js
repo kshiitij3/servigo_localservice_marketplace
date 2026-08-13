@@ -95,7 +95,7 @@ export const getNearby = asyncHandler(async (req, res) => {
   const { longitude, latitude, categories } = req.query;
 
   const categoryIds = categories
-    ? categories.split(",")
+    ? categories.split(",").filter(Boolean)
     : [];
 
   const workRequests =

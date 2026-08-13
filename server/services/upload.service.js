@@ -1,4 +1,4 @@
-import cloudinary from "../config/cloudinary.js";
+import cloudinary, { isCloudinaryConfigured } from "../config/cloudinary.js";
 import ApiError from "../utils/ApiError.js";
 import path from "path";
 
@@ -6,6 +6,10 @@ export const uploadFile = async (file) => {
 
   if (!file) {
     throw new ApiError(400, "No file provided");
+  }
+
+  if (!isCloudinaryConfigured()) {
+    throw new ApiError(503, "File upload service is not configured");
   }
 
   const extension = path.extname(file.originalname || "").toLowerCase();

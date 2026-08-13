@@ -168,6 +168,12 @@ const userSchema = new mongoose.Schema(
         max: [100, "Service radius cannot exceed 100 km"],
       },
 
+      availabilityStatus: {
+        type: String,
+        enum: ["available", "busy"],
+        default: "available",
+      },
+
       portfolio: [
         {
           url: {
