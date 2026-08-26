@@ -56,3 +56,22 @@ export const bookingIdValidation = [
     .isMongoId()
     .withMessage("Invalid booking ID"),
 ];
+
+
+export const updateBookingStatusValidation = [
+  param("id")
+    .isMongoId()
+    .withMessage("Invalid booking ID"),
+
+  body("status")
+    .notEmpty()
+    .withMessage("Booking status is required")
+    .isIn([
+      "scheduled",
+      "on_the_way",
+      "arrived",
+      "work_started",
+      "work_completed",
+    ])
+    .withMessage("Invalid booking status"),
+];

@@ -5,10 +5,12 @@ import { authorize } from "../middleware/roleMiddleware.js";
 
 import {
   create,
+  updateStatus,
 } from "../controllers/booking.controller.js";
 
 import {
   createBookingValidation,
+  updateBookingStatusValidation,
 } from "../validations/booking.validation.js";
 
 import { validate } from "../validations/workRequest.validation.js";
@@ -23,6 +25,15 @@ router.post(
   createBookingValidation,
   validate,
   create
+);
+
+router.patch(
+  "/:id/status",
+  protect,
+  authorize("professional"),
+  updateBookingStatusValidation,
+  validate,
+  updateStatus
 );
 
 export default router;

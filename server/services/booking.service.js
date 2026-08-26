@@ -239,3 +239,87 @@ export const createBooking = async (
 
   return booking;
 };
+
+
+export const updateBookingStatus = async (
+  bookingId,
+  professionalId,
+  newStatus
+) => {
+  const booking = await Booking.findById(bookingId);
+
+  if (!booking) {
+    throw new ApiError(404, "Booking not found");
+  }
+
+  // Only the assigned professional
+  // can update the work progress.
+  if (
+    booking.professional.toString() !==
+    professionalId.toString()
+  ) {
+    throw new ApiError(
+      403,
+      "You are not allowed to update this booking"
+    );
+  }
+
+  // Allowed sequential transitions.
+  const allowedTransitions = {
+    confirmed: ["scheduled"],
+    scheduled: ["on_the_way"],
+    on_the_way: ["arrived"],
+    arrived: ["work_started"],
+    work_started: ["work_completed"],
+    work_completed: [],
+    payment_pending: [],
+    paid: [],
+    closed: [],
+    cancelled: [],
+  };
+
+  const nextStatuses =
+    allowedTransitions[booking.status] || [];
+
+  if (!nextStatuses.includes(newStatus)) {
+    throw new ApiError(
+      400,
+      `Cannot change booking status from ${booking.status} to ${newStatus}`
+    );
+  }
+
+  const now = new Date();
+
+  booking.status = newStatus;
+
+  // Store timestamp for each milestone.
+  if (newStatus === "scheduled") {
+    booking.confirmedAt =
+      booking.confirmedAt || now;
+  }
+
+  if (newStatus === "on_the_way") {
+    booking.onTheWayAt = now;
+  }
+
+  if (newStatus === "arrived") {
+    booking.arrivedAt = now;
+  }
+
+  if (newStatus === "work_started") {
+    booking.workStartedAt = now;
+  }
+
+  if (newStatus === "work_completed") {
+    booking.workCompletedAt = now;
+
+    // Payment becomes due.
+    booking.status = "payment_pending";
+
+    booking.paymentStatus = "pending";
+  }
+
+  await booking.save();
+
+  return booking;
+};
