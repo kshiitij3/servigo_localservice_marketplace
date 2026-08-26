@@ -7,13 +7,14 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import healthRoutes from "./routes/healthRoutes.js";
 import errorMiddleware from "./middleware/error.middleware.js";
+import notFoundMiddleware from "./middleware/notFoundMiddleware.js";
 import authRoutes from "./routes/auth.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import workRequestRoutes from "./routes/workRequest.routes.js";
 import uploadRoutes from "./routes/upload.routes.js";
 import quoteRoutes from "./routes/quote.route.js";
 import professionalRoutes from "./routes/professional.routes.js";
-
+import bookingRoutes from "./routes/booking.routes.js";
 dotenv.config({
   path: fileURLToPath(new URL("./.env", import.meta.url)),
 });
@@ -22,7 +23,7 @@ const app = express();
 // Middlewares
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
     credentials: true,
   })
 );
@@ -38,6 +39,8 @@ app.use("/api/v1/work-requests", workRequestRoutes);
 app.use("/api/v1/upload", uploadRoutes);
 app.use("/api/v1/quotes", quoteRoutes);
 app.use("/api/v1/professionals", professionalRoutes);
+app.use("/api/v1/bookings", bookingRoutes);
+app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 
 export default app;

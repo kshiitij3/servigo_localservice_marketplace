@@ -39,7 +39,7 @@ const bookingSchema = new mongoose.Schema(
     agreedAmount: {
       type: Number,
       required: [true, "Agreed amount is required"],
-      min: [0, "Agreed amount cannot be negative"],
+      min: [1, "Agreed amount must be greater than 0"],
     },
 
     // Copy the location when booking is created.
@@ -83,11 +83,19 @@ const bookingSchema = new mongoose.Schema(
     scheduledDate: {
       type: Date,
       required: [true, "Scheduled date is required"],
+      index: true,
     },
 
     scheduledTime: {
-      type: String,
-      required: [true, "Scheduled time is required"],
+      start: {
+        type: String,
+        required: [true, "Start time is required"],
+      },
+
+      end: {
+        type: String,
+        required: [true, "End time is required"],
+      },
     },
 
     status: {
@@ -210,17 +218,11 @@ bookingSchema.index({
   createdAt: -1,
 });
 
-// Professional booking history
+// Professional booking history and conflict checks
 bookingSchema.index({
   professional: 1,
-  createdAt: -1,
-});
-
-// Professional upcoming jobs
-bookingSchema.index({
-  professional: 1,
-  status: 1,
   scheduledDate: 1,
+  status: 1,
 });
 
 // Location-based operations
@@ -228,7 +230,8 @@ bookingSchema.index({
   workLocation: "2dsphere",
 });
 
-
+// Mongoose 9 executes pre hooks as promises and no longer supplies a
+// callback-style `next` argument.
 bookingSchema.pre("save", async function () {
   if (this.bookingId) {
     return;
@@ -253,8 +256,6 @@ bookingSchema.pre("save", async function () {
   this.bookingId =
     `SVG-BKG-${year}${month}${day}-${randomNumber}`;
 });
-
-
 const Booking = mongoose.model(
   "Booking",
   bookingSchema

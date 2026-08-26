@@ -1,0 +1,241 @@
+import Booking from "../models/Booking.js";
+import Quote from "../models/Quote.js";
+import WorkRequest from "../models/WorkRequest.js";
+import User from "../models/User.js";
+import ApiError from "../utils/ApiError.js";
+
+
+const timeToMinutes = (time) => {
+  if (typeof time !== "string" || !/^([01]\d|2[0-3]):([0-5]\d)$/.test(time)) {
+    return NaN;
+  }
+
+  const [hours, minutes] = time.split(":").map(Number);
+
+  return hours * 60 + minutes;
+};
+
+const isTimeOverlap = (
+  newStart,
+  newEnd,
+  existingStart,
+  existingEnd
+) => {
+  return (
+    newStart < existingEnd &&
+    newEnd > existingStart
+  );
+};
+
+
+export const createBooking = async (
+  customerId,
+  bookingData
+) => {
+  const {
+    quote: quoteId,
+    scheduledDate,
+    scheduledTime,
+  } = bookingData;
+
+  if (!scheduledTime || typeof scheduledTime !== "object") {
+    throw new ApiError(400, "Scheduled time is required");
+  }
+
+
+  const quote = await Quote.findById(quoteId);
+
+  if (!quote) {
+    throw new ApiError(404, "Quote not found");
+  }
+
+
+  if (quote.status !== "accepted") {
+    throw new ApiError(
+      400,
+      "Only an accepted quote can create a booking"
+    );
+  }
+
+
+  const workRequest = await WorkRequest.findById(
+    quote.workRequest
+  );
+
+  if (!workRequest) {
+    throw new ApiError(
+      404,
+      "Work request not found"
+    );
+  }
+
+
+  if (
+    workRequest.customer.toString() !==
+    customerId.toString()
+  ) {
+    throw new ApiError(
+      403,
+      "You are not allowed to create this booking"
+    );
+  }
+
+
+  if (workRequest.status !== "BOOKED") {
+    throw new ApiError(
+      400,
+      "Work request is not ready for booking"
+    );
+  }
+
+
+  const existingBooking = await Booking.findOne({
+    workRequest: workRequest._id,
+  });
+
+  if (existingBooking) {
+    throw new ApiError(
+      409,
+      "A booking already exists for this work request"
+    );
+  }
+
+
+  const professional = await User.findOne({
+    _id: quote.professional,
+    role: "professional",
+    isActive: true,
+  });
+
+  if (!professional) {
+    throw new ApiError(
+      404,
+      "Professional not found or inactive"
+    );
+  }
+
+
+  if (
+    professional.professionalProfile
+      ?.availabilityStatus !== "available"
+  ) {
+    throw new ApiError(
+      400,
+      "Professional is currently unavailable"
+    );
+  }
+
+
+  const newStart = timeToMinutes(
+    scheduledTime.start
+  );
+
+  const newEnd = timeToMinutes(
+    scheduledTime.end
+  );
+
+  if (!Number.isFinite(newStart) || !Number.isFinite(newEnd) || newEnd <= newStart) {
+    throw new ApiError(400, "Scheduled time must be a valid non-empty interval");
+  }
+
+  if (quote.customer.toString() !== customerId.toString()) {
+    throw new ApiError(403, "You are not allowed to create this booking");
+  }
+
+
+  const selectedDate = new Date(scheduledDate);
+
+  if (!Number.isFinite(selectedDate.getTime())) {
+    throw new ApiError(400, "Scheduled date is invalid");
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (selectedDate < today) {
+    throw new ApiError(400, "Scheduled date cannot be in the past");
+  }
+
+  const startOfDay = new Date(selectedDate);
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date(selectedDate);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const existingBookings = await Booking.find({
+    professional: professional._id,
+
+    scheduledDate: {
+      $gte: startOfDay,
+      $lte: endOfDay,
+    },
+
+    status: {
+      $nin: ["cancelled", "closed"],
+    },
+  });
+
+
+  const hasConflict = existingBookings.some(
+    (booking) => {
+      const existingStart = timeToMinutes(
+        booking.scheduledTime.start
+      );
+
+      const existingEnd = timeToMinutes(
+        booking.scheduledTime.end
+      );
+
+      return isTimeOverlap(
+        newStart,
+        newEnd,
+        existingStart,
+        existingEnd
+      );
+    }
+  );
+
+  if (hasConflict) {
+    throw new ApiError(
+      409,
+      "Professional already has a booking during this time slot"
+    );
+  }
+
+
+  const booking = await Booking.create({
+    workRequest: workRequest._id,
+
+    quote: quote._id,
+
+    customer: workRequest.customer,
+
+    professional: quote.professional,
+
+    agreedAmount: quote.amount,
+
+    workLocation: workRequest.location,
+
+    scheduledDate: selectedDate,
+
+    scheduledTime: {
+      start: scheduledTime.start,
+      end: scheduledTime.end,
+    },
+
+    status: "confirmed",
+
+    paymentStatus: "pending",
+  });
+
+  await User.updateOne(
+    { _id: professional._id },
+    {
+      $set: {
+        "professionalProfile.availabilityStatus": "busy",
+      },
+    }
+  );
+
+
+  return booking;
+};

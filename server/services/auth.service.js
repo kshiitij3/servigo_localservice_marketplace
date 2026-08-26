@@ -3,6 +3,19 @@ import User from "../models/User.js";
 import ApiError from "../utils/ApiError.js";
 import generateToken from "../utils/generateToken.js";
 
+const validatePassword = (password) => {
+  if (
+    typeof password !== "string" ||
+    password.length < 8 ||
+    !/[A-Z]/.test(password) ||
+    !/[a-z]/.test(password) ||
+    !/[0-9]/.test(password) ||
+    !/[!@#$%^&*(),.?":{}|<>]/.test(password)
+  ) {
+    throw new ApiError(400, "Password does not meet the security requirements");
+  }
+};
+
 
 
 export const registerUser = async (userData) => {
@@ -131,6 +144,8 @@ export const changePassword = async (
   currentPassword,
   newPassword
 ) => {
+  validatePassword(newPassword);
+
   const user = await User.findById(userId).select("+password");
 
   if (!user) {
@@ -141,6 +156,10 @@ export const changePassword = async (
 
   if (!isMatch) {
     throw new ApiError(401, "Current password is incorrect");
+  }
+
+  if (currentPassword === newPassword) {
+    throw new ApiError(400, "New password must be different from current password");
   }
 
   user.password = newPassword;

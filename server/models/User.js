@@ -30,12 +30,13 @@ const userSchema = new mongoose.Schema(
   required: true,
   unique: true,
   trim: true,
+  match: [/^[6-9]\d{9}$/, "Please provide a valid Indian mobile number"],
 },
 
     password: {
       type: String,
       required: [true, "Password is required"],
-      minlength: [8, "Password must be at least 6 characters"],
+      minlength: [8, "Password must be at least 8 characters"],
       select: false,
     },
 
@@ -170,7 +171,7 @@ const userSchema = new mongoose.Schema(
 
       availabilityStatus: {
         type: String,
-        enum: ["available", "busy"],
+        enum: ["available", "busy", "unavailable"],
         default: "available",
       },
 

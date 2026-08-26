@@ -218,10 +218,14 @@ export const updateWorkRequest = async (
 
   }
 
-  if (updateData.budget) {
+  if (updateData.budget !== undefined) {
+    const nextBudget = {
+      ...(workRequest.budget?.toObject?.() || workRequest.budget || {}),
+      ...updateData.budget,
+    };
 
-    validateBudget(updateData.budget);
-
+    validateBudget(nextBudget);
+    updateData = { ...updateData, budget: nextBudget };
   }
 
   const allowedFields = [
@@ -231,6 +235,7 @@ export const updateWorkRequest = async (
     "customCategory",
     "isUrgent",
     "visibilityRadius",
+    "budget",
   ];
 
   for (const field of allowedFields) {

@@ -50,6 +50,40 @@ export const loginValidation = [
     .withMessage("Password is required"),
 ];
 
+const passwordRules = (field) => [
+  body(field)
+    .isLength({ min: 8 })
+    .withMessage("Password must be at least 8 characters")
+    .matches(/[A-Z]/)
+    .withMessage("Password must contain at least one uppercase letter")
+    .matches(/[a-z]/)
+    .withMessage("Password must contain at least one lowercase letter")
+    .matches(/[0-9]/)
+    .withMessage("Password must contain at least one number")
+    .matches(/[!@#$%^&*(),.?\":{}|<>]/)
+    .withMessage("Password must contain at least one special character"),
+];
+
+export const changePasswordValidation = [
+  body("currentPassword")
+    .notEmpty()
+    .withMessage("Current password is required"),
+  ...passwordRules("newPassword"),
+];
+
+export const updateProfileValidation = [
+  body("name")
+    .optional()
+    .trim()
+    .isLength({ min: 3, max: 50 })
+    .withMessage("Name must be between 3 and 50 characters"),
+  body("phone")
+    .optional()
+    .trim()
+    .matches(/^[6-9]\d{9}$/)
+    .withMessage("Please provide a valid Indian mobile number"),
+];
+
 //validation result handler
 
 export const validate = (req, res, next) => {

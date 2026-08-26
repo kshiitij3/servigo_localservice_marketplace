@@ -139,13 +139,17 @@ export const updateQuote = async (
     estimatedDuration,
   } = quoteData;
 
+  if (!Number.isFinite(Number(amount)) || Number(amount) < 1) {
+    throw new ApiError(400, "Quote amount must be greater than 0");
+  }
+
   // Save previous version
   quote.revisions.push({
     amount: quote.amount,
     message: quote.message,
   });
 
-  quote.amount = amount;
+  quote.amount = Number(amount);
 
   if (message !== undefined) {
     quote.message = message;

@@ -1,5 +1,4 @@
 import express from "express";
-
 import protect from "../middleware/auth.middleware.js";
 import { authorize } from "../middleware/roleMiddleware.js";
 
@@ -21,7 +20,6 @@ import { validate } from "../validations/workRequest.validation.js";
 
 const router = express.Router();
 
-
 // Professional creates quote
 router.post(
   "/",
@@ -32,7 +30,6 @@ router.post(
   create
 );
 
-
 // Professional's own quotes
 router.get(
   "/my",
@@ -40,7 +37,6 @@ router.get(
   authorize("professional"),
   getMine
 );
-
 
 // Customer gets quotes for a work request
 router.get(
@@ -58,7 +54,6 @@ router.patch(
   validate,
   accept
 );
-
 
 // Professional negotiates / updates quote
 router.put(

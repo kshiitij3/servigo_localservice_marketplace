@@ -200,6 +200,27 @@ export const updateWorkRequestValidation = [
     .withMessage(
       "Visibility radius must be between 5 and 50 km"
     ),
+
+  body("budget")
+    .optional()
+    .isObject()
+    .withMessage("Budget must be an object"),
+
+  body("budget.min")
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage("Minimum budget must be greater than or equal to 0"),
+
+  body("budget.max")
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage("Maximum budget must be greater than or equal to 0")
+    .custom((value, { req }) => {
+      if (req.body.budget?.min !== undefined && Number(value) < Number(req.body.budget.min)) {
+        throw new Error("Maximum budget cannot be less than minimum budget");
+      }
+      return true;
+    }),
 ];
 
 export const workRequestIdValidation = [

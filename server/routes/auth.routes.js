@@ -12,6 +12,8 @@ import {
 import {
   registerValidation,
   loginValidation,
+  updateProfileValidation,
+  changePasswordValidation,
   validate,
 } from "../validations/auth.validation.js";
 import protect from "../middleware/auth.middleware.js";
@@ -36,7 +38,7 @@ router.post(
 // Protected Routes
 router.post("/logout", protect, logout);
 router.get("/me", protect, getMe);
-router.put("/update-profile", protect, updateMe);
-router.patch("/change-password", protect, updateMyPassword);
+router.put("/update-profile", protect, updateProfileValidation, validate, updateMe);
+router.patch("/change-password", protect, changePasswordValidation, validate, updateMyPassword);
 
 export default router;

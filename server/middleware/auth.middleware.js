@@ -7,7 +7,7 @@ const protect = asyncHandler(async (req, res, next) => {
   const token = req.cookies?.token || req.header("Authorization")?.replace("Bearer ", "");
 
   if (!token) {
-    throw new ApiError(401, "Not authorized, no token provided");
+    throw new ApiError(401, "Please login to continue");
   }
 
   let decoded;
