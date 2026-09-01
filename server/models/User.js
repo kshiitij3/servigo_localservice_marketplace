@@ -168,7 +168,33 @@ const userSchema = new mongoose.Schema(
         min: [1, "Service radius must be at least 1 km"],
         max: [100, "Service radius cannot exceed 100 km"],
       },
+     paymentProfile: {
+  // Razorpay Linked Account ID
+  razorpayAccountId: {
+    type: String,
+    default: null,
+    index: true,
+  },
 
+  // Razorpay onboarding status
+  onboardingStatus: {
+    type: String,
+    enum: [
+      "not_started",
+      "pending",
+      "active",
+      "rejected",
+    ],
+    default: "not_started",
+  },
+
+  // Whether this professional can receive
+  // marketplace payments
+  isPaymentEnabled: {
+    type: Boolean,
+    default: false,
+  },
+},
       availabilityStatus: {
         type: String,
         enum: ["available", "busy", "unavailable"],
