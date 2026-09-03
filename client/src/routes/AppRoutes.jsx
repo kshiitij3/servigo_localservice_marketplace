@@ -9,6 +9,7 @@ import LandingPage from "../pages/public/LandingPage";
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
 import CustomerDashboard from "../pages/customer/CustomerDashboard";
+import CreateWorkRequest from "../pages/customer/CreateWorkRequest";
 import ProfessionalDashboard from "../pages/professional/ProfessionalDashboard";
 
 const AppRoutes = () => {
@@ -34,6 +35,11 @@ const AppRoutes = () => {
         <Route
           path="/customer/dashboard"
           element={<CustomerDashboard />}
+        />
+
+        <Route
+          path="/customer/work-requests/new"
+          element={<CreateWorkRequest />}
         />
 
         <Route

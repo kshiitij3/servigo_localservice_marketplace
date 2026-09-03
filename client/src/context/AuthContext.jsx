@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from 'react';
+import { createContext, useState, useEffect } from 'react';
 import { login as apiLogin, register as apiRegister, logout as apiLogout } from '../services';
 
 export const AuthContext = createContext(null);
@@ -37,8 +37,8 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     try {
       const response = await apiLogin(credentials);
-      const userData = response?.data?.user || response?.user;
-      const tokenData = response?.data?.token || response?.token;
+      const userData = response?.data?.data?.user || response?.data?.user || response?.user;
+      const tokenData = response?.data?.data?.token || response?.data?.token || response?.token;
 
       if (userData) {
         setUser(userData);
@@ -63,8 +63,8 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     try {
       const response = await apiRegister(userData);
-      const userObj = response?.data?.user || response?.user;
-      const tokenData = response?.data?.token || response?.token;
+      const userObj = response?.data?.data?.user || response?.data?.user || response?.user;
+      const tokenData = response?.data?.data?.token || response?.data?.token || response?.token;
 
       if (userObj) {
         setUser(userObj);
@@ -77,9 +77,12 @@ export const AuthProvider = ({ children }) => {
       return response;
     } catch (err) {
       const validationErrors = err?.response?.data?.data?.errors;
-      const message = validationErrors?.length
+      const conflictMessage = err?.response?.status === 409
+        ? err?.response?.data?.message || 'An account with this email or phone number already exists. Please log in.'
+        : null;
+      const message = conflictMessage || (validationErrors?.length
         ? validationErrors.map(({ msg, path }) => `${path}: ${msg}`).join('. ')
-        : err?.response?.data?.message || err?.message || 'Registration failed';
+        : err?.response?.data?.message || err?.message || 'Registration failed');
       setError(message);
       throw err;
     } finally {

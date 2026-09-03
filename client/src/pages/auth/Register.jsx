@@ -82,11 +82,11 @@ const Register = () => {
       // The API expects a 10-digit Indian mobile number without spaces.
       submitData.phone = submitData.phone.replace(/\s+/g, "");
       const response = await register(submitData);
-      const role = response?.data?.user?.role;
+      const role = response?.data?.data?.user?.role || response?.data?.user?.role || response?.user?.role;
       if (role === "customer") navigate("/customer/dashboard");
       else if (role === "professional") navigate("/professional/dashboard");
     } catch (err) {
-      console.error("Registration failed:", err);
+      console.warn("Registration failed:", err?.response?.data?.message || err.message);
     }
   };
 
