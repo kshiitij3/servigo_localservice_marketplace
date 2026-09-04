@@ -16,11 +16,9 @@ import {
   HiXMark,
   HiTag,
   HiPhoto,
-  HiVideoCamera,
-  HiPaperClip
+  HiVideoCamera
 } from "react-icons/hi2";
 
-import useAuth from "../../hooks/useAuth";
 import { getCategories } from "../../services/category.service";
 import { createWorkRequest } from "../../services/workRequest.service";
 import { uploadMedia } from "../../services/upload.service";
@@ -47,7 +45,6 @@ const initialForm = {
 
 const CreateWorkRequest = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   const [formData, setFormData] = useState(initialForm);
   const [location, setLocation] = useState({

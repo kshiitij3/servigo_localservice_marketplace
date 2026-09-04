@@ -7,8 +7,7 @@ import {
   HiCalendarDays,
   HiBell,
   HiUser,
-  HiArrowRightOnRectangle,
-  HiSparkles
+  HiArrowRightOnRectangle
 } from "react-icons/hi2";
 import useAuth from "../../hooks/useAuth";
 
@@ -23,7 +22,7 @@ const links = [
 const CustomerNavbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout, user } = useAuth();
+  const { logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const go = (path) => {

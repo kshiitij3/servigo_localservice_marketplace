@@ -53,10 +53,7 @@ const CustomerDashboard = () => {
         
         {/* Welcome Section */}
         <section className="mb-8">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#1a7a6e]">
-            Customer Portal
-          </p>
-          <h1 className="mt-1 text-2xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
             Welcome back, {user?.name || "Customer"} 👋
           </h1>
           <p className="mt-1 text-sm text-gray-500">

@@ -10,6 +10,8 @@ import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
 import CustomerDashboard from "../pages/customer/CustomerDashboard";
 import CreateWorkRequest from "../pages/customer/CreateWorkRequest";
+import MyWorkRequests from "../pages/customer/MyWorkRequests";
+import WorkRequestDetails from "../pages/customer/WorkRequestDetails";
 import ProfessionalDashboard from "../pages/professional/ProfessionalDashboard";
 
 const AppRoutes = () => {
@@ -40,6 +42,16 @@ const AppRoutes = () => {
         <Route
           path="/customer/work-requests/new"
           element={<CreateWorkRequest />}
+        />
+
+        <Route
+          path="/customer/work-requests"
+          element={<MyWorkRequests />}
+        />
+
+        <Route
+          path="/customer/work-requests/:id"
+          element={<WorkRequestDetails />}
         />
 
         <Route
