@@ -15,6 +15,7 @@ import WorkRequestDetails from "../pages/customer/WorkRequestDetails";
 import CustomerQuotes from "../pages/customer/CustomerQuotes";
 import QuoteDetails from "../pages/customer/QuoteDetails";
 import ProfessionalDashboard from "../pages/professional/ProfessionalDashboard";
+import NearbyJobs from "../pages/professional/NearbyJobs";
 
 const AppRoutes = () => {
   return (
@@ -69,6 +70,11 @@ const AppRoutes = () => {
         <Route
           path="/professional/dashboard"
           element={<ProfessionalDashboard />}
+        />
+
+        <Route
+          path="/professional/jobs"
+          element={<NearbyJobs />}
         />
 
         {/* Catch-all → landing */}
