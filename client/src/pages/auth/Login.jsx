@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   HiEnvelope,
   HiLockClosed,
   HiEye,
   HiEyeSlash,
   HiArrowRightOnRectangle,
-  HiExclamationCircle
+  HiExclamationCircle,
+  HiArrowLeft
 } from "react-icons/hi2";
 import useAuth from "../../hooks/useAuth";
 
@@ -45,22 +46,37 @@ const Login = () => {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4 py-12"
+      className="min-h-screen flex flex-col items-center justify-center px-4 py-12"
       style={{
         background:
           "linear-gradient(135deg, #d6e8e6 0%, #e8edf0 50%, #dde5e8 100%)",
       }}
     >
       <div className="w-full max-w-md">
+        {/* Back to Home Button */}
+        <div className="mb-3 flex items-center justify-between">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-[#1a7a6e] transition-all bg-white/70 hover:bg-white px-3.5 py-2 rounded-xl shadow-xs border border-gray-200/60 backdrop-blur-sm group"
+          >
+            <HiArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            <span>Back to Home</span>
+          </Link>
+        </div>
+
         <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
           {/* Branding Header */}
           <div className="bg-white pt-8 pb-4 flex flex-col items-center border-b border-gray-100">
-            <div className="flex items-center gap-3 mb-1">
+            <Link
+              to="/"
+              className="flex items-center gap-3 mb-1 hover:opacity-90 transition-opacity"
+              title="Return to Home"
+            >
               <ServigoLogo />
               <span className="text-2xl font-black text-[#1a7a6e] tracking-wider">
                 SERVIGO
               </span>
-            </div>
+            </Link>
             <p className="text-xs text-gray-500 mt-1">
               Your Local Service Marketplace
             </p>

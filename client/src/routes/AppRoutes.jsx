@@ -12,6 +12,7 @@ import CustomerDashboard from "../pages/customer/CustomerDashboard";
 import CreateWorkRequest from "../pages/customer/CreateWorkRequest";
 import MyWorkRequests from "../pages/customer/MyWorkRequests";
 import WorkRequestDetails from "../pages/customer/WorkRequestDetails";
+import CustomerQuotes from "../pages/customer/CustomerQuotes";
 import ProfessionalDashboard from "../pages/professional/ProfessionalDashboard";
 
 const AppRoutes = () => {
@@ -52,6 +53,11 @@ const AppRoutes = () => {
         <Route
           path="/customer/work-requests/:id"
           element={<WorkRequestDetails />}
+        />
+
+        <Route
+          path="/customer/work-requests/:id/quotes"
+          element={<CustomerQuotes />}
         />
 
         <Route

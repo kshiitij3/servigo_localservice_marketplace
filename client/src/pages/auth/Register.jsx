@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 
 /* ── Servigo shield logo ── */
@@ -92,7 +92,7 @@ const Register = () => {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4 py-12"
+      className="min-h-screen flex flex-col items-center justify-center px-4 py-12 relative"
       style={{ background: "linear-gradient(135deg, #d6e8e6 0%, #e8edf0 50%, #dde5e8 100%)" }}
     >
       {/* Sparkle decoration */}
@@ -103,15 +103,32 @@ const Register = () => {
       </div>
 
       <div className="w-full max-w-sm">
+        {/* Back to Home Button */}
+        <div className="mb-3 flex items-center justify-between">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-[#1a7a6e] transition-all bg-white/70 hover:bg-white px-3.5 py-2 rounded-xl shadow-xs border border-gray-200/60 backdrop-blur-sm group"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4 transition-transform group-hover:-translate-x-1">
+              <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span>Back to Home</span>
+          </Link>
+        </div>
+
         {/* Card */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
 
           {/* Top branding */}
           <div className="bg-white pt-8 pb-4 flex flex-col items-center border-b border-gray-50">
-            <div className="flex items-center gap-2 mb-1">
+            <Link
+              to="/"
+              className="flex items-center gap-2 mb-1 hover:opacity-90 transition-opacity"
+              title="Return to Home"
+            >
               <ServigoLogo />
               <span className="text-2xl font-bold text-[#1a7a6e]">Servigo</span>
-            </div>
+            </Link>
             <p className="text-xl font-semibold text-gray-800 mt-2">Create your account</p>
           </div>
 
