@@ -13,6 +13,7 @@ import CreateWorkRequest from "../pages/customer/CreateWorkRequest";
 import MyWorkRequests from "../pages/customer/MyWorkRequests";
 import WorkRequestDetails from "../pages/customer/WorkRequestDetails";
 import CustomerQuotes from "../pages/customer/CustomerQuotes";
+import QuoteDetails from "../pages/customer/QuoteDetails";
 import ProfessionalDashboard from "../pages/professional/ProfessionalDashboard";
 
 const AppRoutes = () => {
@@ -58,6 +59,11 @@ const AppRoutes = () => {
         <Route
           path="/customer/work-requests/:id/quotes"
           element={<CustomerQuotes />}
+        />
+
+        <Route
+          path="/customer/quotes/:id"
+          element={<QuoteDetails />}
         />
 
         <Route

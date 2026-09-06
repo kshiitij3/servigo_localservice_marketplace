@@ -19,7 +19,7 @@ import {
   QuoteDetailsModal,
   QuotesEmptyState,
   QuotesSkeleton,
-} from "../../components/customer/quotes";
+} from "../../components/customer/quote";
 
 const CustomerQuotes = () => {
   const { id } = useParams();
@@ -262,6 +262,15 @@ const CustomerQuotes = () => {
     );
   }
 
+  const handleViewQuote = (quote) => {
+    navigate(`/customer/quotes/${quote._id}`, {
+      state: {
+        quote,
+        workRequest: request,
+      },
+    });
+  };
+
   const isJobBooked = request.status === "BOOKED";
 
   return (
@@ -351,7 +360,7 @@ const CustomerQuotes = () => {
                   isJobBooked={isJobBooked}
                   acceptingQuoteId={acceptingQuoteId}
                   onAccept={handleAcceptQuote}
-                  onViewDetails={setSelectedQuoteForModal}
+                  onViewDetails={handleViewQuote}
                 />
               ))}
             </div>

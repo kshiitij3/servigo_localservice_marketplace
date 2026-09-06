@@ -4,3 +4,6 @@ export { default as QuoteCard } from "./QuoteCard";
 export { default as QuoteDetailsModal } from "./QuoteDetailsModal";
 export { default as QuotesEmptyState } from "./QuotesEmptyState";
 export { default as QuotesSkeleton } from "./QuotesSkeleton";
+export { default as QuoteStatus } from "./QuoteStatus";
+export { default as QuoteSummary } from "./QuoteSummary";
+export { default as QuoteRevision } from "./QuoteRevision";
