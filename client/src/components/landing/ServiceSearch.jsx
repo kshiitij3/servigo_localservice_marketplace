@@ -1,8 +1,8 @@
 import { FaArrowRight, FaLocationDot, FaMagnifyingGlass } from "react-icons/fa6";
 
 const ServiceSearch = ({ service, location, setService, setLocation, onFind, onUseLocation }) => (
-  <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-xl sm:p-7">
-    <p className="mb-5 text-lg font-bold">Find the right professional</p>
+  <div className="rounded-3xl border border-white/80 bg-white/95 backdrop-blur-md p-6 shadow-2xl sm:p-8">
+    <p className="mb-5 text-lg font-bold text-gray-900">Find the right professional</p>
     <label className="mb-2 block text-sm font-medium text-gray-600">What service do you need?</label>
     <div className="mb-5 flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 focus-within:border-[#1a7a6e] focus-within:ring-2 focus-within:ring-[#1a7a6e]/20"><FaMagnifyingGlass className="shrink-0 text-gray-400" aria-hidden="true" /><input value={service} onChange={(e) => setService(e.target.value)} placeholder="e.g. Plumbing or Cleaning" className="w-full outline-none" /></div>
     <label className="mb-2 block text-sm font-medium text-gray-600">Where do you need it?</label>
