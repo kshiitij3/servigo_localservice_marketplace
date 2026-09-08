@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   HiBanknotes,
   HiChatBubbleBottomCenterText,
@@ -7,18 +7,61 @@ import {
   HiCheckCircle,
 } from "react-icons/hi2";
 
-const QuoteForm = ({ onSubmit, loading, suggestedBudget }) => {
+const QuoteForm = ({ onSubmit, loading, initialData, suggestedBudget }) => {
+  const isRevision = Boolean(initialData?.amount || initialData?.initialAmount);
+
   const [formData, setFormData] = useState({
-    initialAmount: suggestedBudget?.min ? String(suggestedBudget.min) : "",
-    amount: suggestedBudget?.min ? String(suggestedBudget.min) : "",
-    message: "",
-    durationValue: "2",
-    durationUnit: "hours",
-    availableDate: new Date().toISOString().split("T")[0],
-    availableTime: "10:00",
+    initialAmount:
+      initialData?.initialAmount !== undefined && initialData?.initialAmount !== null
+        ? String(initialData.initialAmount)
+        : suggestedBudget?.min
+        ? String(suggestedBudget.min)
+        : "",
+    amount:
+      initialData?.amount !== undefined && initialData?.amount !== null
+        ? String(initialData.amount)
+        : suggestedBudget?.min
+        ? String(suggestedBudget.min)
+        : "",
+    message: initialData?.message || "",
+    durationValue:
+      initialData?.durationValue !== undefined && initialData?.durationValue !== null
+        ? String(initialData.durationValue)
+        : "2",
+    durationUnit: initialData?.durationUnit || "hours",
+    availableDate:
+      initialData?.availableDate || new Date().toISOString().split("T")[0],
+    availableTime: initialData?.availableTime || "10:00",
   });
 
-  const [hasCustomAmount, setHasCustomAmount] = useState(false);
+  const [hasCustomAmount, setHasCustomAmount] = useState(Boolean(initialData?.amount));
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        initialAmount:
+          initialData.initialAmount !== undefined && initialData.initialAmount !== null
+            ? String(initialData.initialAmount)
+            : "",
+        amount:
+          initialData.amount !== undefined && initialData.amount !== null
+            ? String(initialData.amount)
+            : "",
+        message: initialData.message || "",
+        durationValue:
+          initialData.durationValue !== undefined && initialData.durationValue !== null
+            ? String(initialData.durationValue)
+            : "2",
+        durationUnit: initialData.durationUnit || "hours",
+        availableDate:
+          initialData.availableDate || new Date().toISOString().split("T")[0],
+        availableTime: initialData.availableTime || "10:00",
+      });
+      if (initialData.amount) {
+        setHasCustomAmount(true);
+      }
+    }
+  }, [initialData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -50,7 +93,7 @@ const QuoteForm = ({ onSubmit, loading, suggestedBudget }) => {
         <div>
           <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
             <HiBanknotes className="w-4 h-4 text-gray-400" />
-            <span>Initial Proposed Price (₹)</span>
+            <span>{isRevision ? "Original Quote (₹)" : "Initial Proposed Price (₹)"}</span>
           </label>
 
           <div className="relative">
@@ -66,11 +109,18 @@ const QuoteForm = ({ onSubmit, loading, suggestedBudget }) => {
               onChange={handleChange}
               placeholder="1000"
               required
-              className="w-full border border-gray-300 rounded-xl pl-8 pr-4 py-3 text-base font-semibold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1a7a6e]/20 focus:border-[#1a7a6e] transition bg-gray-50/50 focus:bg-white"
+              readOnly={isRevision}
+              className={`w-full border rounded-xl pl-8 pr-4 py-3 text-base font-semibold transition ${
+                isRevision
+                  ? "bg-gray-100/90 border-gray-200 text-gray-500 cursor-not-allowed select-none"
+                  : "bg-gray-50/50 border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1a7a6e]/20 focus:border-[#1a7a6e] focus:bg-white"
+              }`}
             />
           </div>
           <p className="text-[11px] text-gray-400 mt-1">
-            Your primary quoted fee for the work requested.
+            {isRevision
+              ? "Your original proposal amount remains fixed on record."
+              : "Your primary quoted fee for the work requested."}
           </p>
         </div>
 
@@ -78,7 +128,7 @@ const QuoteForm = ({ onSubmit, loading, suggestedBudget }) => {
         <div>
           <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
             <HiBanknotes className="w-4 h-4 text-[#1a7a6e]" />
-            <span>Final Quote Amount (₹)</span>
+            <span>{isRevision ? "Revised Quote Amount (₹)" : "Final Quote Amount (₹)"}</span>
           </label>
 
           <div className="relative">
@@ -98,7 +148,9 @@ const QuoteForm = ({ onSubmit, loading, suggestedBudget }) => {
             />
           </div>
           <p className="text-[11px] text-gray-400 mt-1">
-            Amount the customer will see as your active quote.
+            {isRevision
+              ? "New price customer will review for acceptance."
+              : "Amount the customer will see as your active quote."}
           </p>
         </div>
       </div>
@@ -208,12 +260,12 @@ const QuoteForm = ({ onSubmit, loading, suggestedBudget }) => {
         {loading ? (
           <>
             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            <span>Submitting Quote to Customer...</span>
+            <span>{isRevision ? "Updating Quote..." : "Submitting Quote to Customer..."}</span>
           </>
         ) : (
           <>
             <HiCheckCircle className="w-5 h-5" />
-            <span>Submit Quote</span>
+            <span>{isRevision ? "Submit Revised Quote" : "Submit Quote"}</span>
           </>
         )}
       </button>

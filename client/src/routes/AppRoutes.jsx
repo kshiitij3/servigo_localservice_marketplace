@@ -19,6 +19,7 @@ import NearbyJobs from "../pages/professional/NearbyJobs";
 import ProfessionalJobDetails from "../pages/professional/ProfessionalJobDetails";
 import CreateQuote from "../pages/professional/CreateQuote";
 import MyQuotes from "../pages/professional/MyQuotes";
+import EditQuote from "../pages/professional/EditQuote";
 
 const AppRoutes = () => {
   return (
@@ -93,6 +94,11 @@ const AppRoutes = () => {
         <Route
           path="/professional/quotes"
           element={<MyQuotes />}
+        />
+
+        <Route
+          path="/professional/quotes/:id/edit"
+          element={<EditQuote />}
         />
 
         {/* Catch-all → landing */}
