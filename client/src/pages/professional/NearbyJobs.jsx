@@ -12,6 +12,7 @@ import {
 
 import { getNearbyWorkRequests } from "../../services/workRequest.service";
 import { getCategories } from "../../services/category.service";
+import { updateProfessionalLocation } from "../../services/professional.service";
 
 import ProfessionalNavbar from "../../components/professional/ProfessionalNavbar";
 import JobCard from "../../components/professional/jobs/JobCard";
@@ -58,9 +59,26 @@ const NearbyJobs = () => {
     setLoadingLocation(true);
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLatitude(position.coords.latitude);
-        setLongitude(position.coords.longitude);
+      async (position) => {
+        const nextLatitude = position.coords.latitude;
+        const nextLongitude = position.coords.longitude;
+
+        setLatitude(nextLatitude);
+        setLongitude(nextLongitude);
+
+        try {
+          await updateProfessionalLocation({
+            type: "Point",
+            coordinates: [nextLongitude, nextLatitude],
+            address: "",
+            city: "",
+            state: "",
+            pincode: "",
+          });
+        } catch (error) {
+          console.error("Failed to save professional location:", error);
+        }
+
         setLoadingLocation(false);
       },
       (error) => {

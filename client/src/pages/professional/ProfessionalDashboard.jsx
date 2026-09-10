@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { HiArrowRight, HiMapPin, HiSparkles } from "react-icons/hi2";
+import toast from "react-hot-toast";
 
 import useAuth from "../../hooks/useAuth";
 import ProfessionalNavbar from "../../components/professional/ProfessionalNavbar";
@@ -9,6 +10,7 @@ import QuickActionCard from "../../components/professional/dashboard/QuickAction
 import AvailabilityCard from "../../components/professional/dashboard/AvailabilityCard";
 import { getMyQuotes } from "../../services/quote.service";
 import { getNearbyWorkRequests } from "../../services/workRequest.service";
+import { updateProfessionalLocation } from "../../services/professional.service";
 
 const ProfessionalDashboard = () => {
   const navigate = useNavigate();
@@ -27,12 +29,14 @@ const ProfessionalDashboard = () => {
   useEffect(() => {
     let mounted = true;
 
-    const fetchDashboardData = async () => {
+    const fetchDashboardData = async (latitude, longitude) => {
       try {
-        const [quotesRes, nearbyRes] = await Promise.allSettled([
-          getMyQuotes(),
-          getNearbyWorkRequests(),
-        ]);
+        const requests = [getMyQuotes()];
+        if (latitude !== null && longitude !== null) {
+          requests.push(getNearbyWorkRequests({ latitude, longitude }));
+        }
+
+        const [quotesRes, nearbyRes] = await Promise.allSettled(requests);
 
         let quotesCount = 0;
         if (quotesRes.status === "fulfilled") {
@@ -49,7 +53,7 @@ const ProfessionalDashboard = () => {
 
         let nearbyJobsCount = 0;
         let nearbyList = [];
-        if (nearbyRes.status === "fulfilled") {
+        if (nearbyRes?.status === "fulfilled") {
           const raw = nearbyRes.value?.data;
           nearbyList = Array.isArray(raw?.data)
             ? raw.data
@@ -76,7 +80,45 @@ const ProfessionalDashboard = () => {
       }
     };
 
-    fetchDashboardData();
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by this browser.");
+      fetchDashboardData(null, null);
+      return () => {
+        mounted = false;
+      };
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+
+        try {
+          await updateProfessionalLocation({
+            type: "Point",
+            coordinates: [longitude, latitude],
+            address: "",
+            city: "",
+            state: "",
+            pincode: "",
+          });
+        } catch (error) {
+          console.error("Failed to save professional location:", error);
+        }
+
+        await fetchDashboardData(latitude, longitude);
+      },
+      (error) => {
+        console.error("Location error:", error);
+        toast.error("Please allow location access to discover nearby jobs.");
+        fetchDashboardData(null, null);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 300000,
+      }
+    );
 
     return () => {
       mounted = false;
