@@ -15,6 +15,8 @@ import WorkRequestDetails from "../pages/customer/WorkRequestDetails";
 import CustomerQuotes from "../pages/customer/CustomerQuotes";
 import QuoteDetails from "../pages/customer/QuoteDetails";
 import CreateBooking from "../pages/customer/CreateBooking";
+import CustomerMyBookings from "../pages/customer/MyBookings";
+import CustomerBookingDetails from "../pages/customer/BookingDetails";
 import ProfessionalDashboard from "../pages/professional/ProfessionalDashboard";
 import NearbyJobs from "../pages/professional/NearbyJobs";
 import ProfessionalJobDetails from "../pages/professional/ProfessionalJobDetails";
@@ -76,8 +78,18 @@ const AppRoutes = () => {
         />
 
         <Route
+          path="/customer/bookings"
+          element={<CustomerMyBookings />}
+        />
+
+        <Route
           path="/customer/bookings/create"
           element={<CreateBooking />}
+        />
+
+        <Route
+          path="/customer/bookings/:id"
+          element={<CustomerBookingDetails />}
         />
 
         <Route
