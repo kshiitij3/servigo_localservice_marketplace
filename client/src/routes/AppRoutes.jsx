@@ -14,12 +14,16 @@ import MyWorkRequests from "../pages/customer/MyWorkRequests";
 import WorkRequestDetails from "../pages/customer/WorkRequestDetails";
 import CustomerQuotes from "../pages/customer/CustomerQuotes";
 import QuoteDetails from "../pages/customer/QuoteDetails";
+import CreateBooking from "../pages/customer/CreateBooking";
 import ProfessionalDashboard from "../pages/professional/ProfessionalDashboard";
 import NearbyJobs from "../pages/professional/NearbyJobs";
 import ProfessionalJobDetails from "../pages/professional/ProfessionalJobDetails";
 import CreateQuote from "../pages/professional/CreateQuote";
 import MyQuotes from "../pages/professional/MyQuotes";
 import EditQuote from "../pages/professional/EditQuote";
+import ProfessionalQuoteDetails from "../pages/professional/ProfessionalQuoteDetails";
+import MyBookings from "../pages/professional/MyBookings";
+import ProfessionalBookingDetails from "../pages/professional/ProfessionalBookingDetails";
 
 const AppRoutes = () => {
   return (
@@ -72,6 +76,11 @@ const AppRoutes = () => {
         />
 
         <Route
+          path="/customer/bookings/create"
+          element={<CreateBooking />}
+        />
+
+        <Route
           path="/professional/dashboard"
           element={<ProfessionalDashboard />}
         />
@@ -97,8 +106,23 @@ const AppRoutes = () => {
         />
 
         <Route
+          path="/professional/quotes/:id"
+          element={<ProfessionalQuoteDetails />}
+        />
+
+        <Route
           path="/professional/quotes/:id/edit"
           element={<EditQuote />}
+        />
+
+        <Route
+          path="/professional/bookings"
+          element={<MyBookings />}
+        />
+
+        <Route
+          path="/professional/bookings/:id"
+          element={<ProfessionalBookingDetails />}
         />
 
         {/* Catch-all → landing */}

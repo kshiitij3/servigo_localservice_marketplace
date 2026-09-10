@@ -23,3 +23,8 @@ export const updateQuote = async (id, data) => {
 export const acceptQuote = async (id) => {
   return await api.patch(`/quotes/${id}/accept`);
 };
+
+export const getQuoteById = async (id) => {
+  return await api.get(`/quotes/${id}`);
+};
+

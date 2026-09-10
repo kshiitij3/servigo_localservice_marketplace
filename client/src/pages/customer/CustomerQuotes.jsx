@@ -103,49 +103,26 @@ const CustomerQuotes = () => {
     try {
       setAcceptingQuoteId(quoteId);
 
-      const response = await acceptQuote(quoteId);
+      await acceptQuote(quoteId);
 
       toast.success(
         response?.data?.message ||
           response?.message ||
-          "Quote accepted successfully! Your booking is confirmed."
+          "Quote accepted! Proceeding to schedule your booking..."
       );
 
-      // Update state locally
-      setQuotes((prev) =>
-        prev.map((quote) => {
-          if (quote._id === quoteId) {
-            return {
-              ...quote,
-              status: "accepted",
-            };
-          }
+      const acceptedQuote =
+        quotes.find((quote) => quote._id === quoteId) || targetQuote;
 
-          if (["submitted", "negotiating"].includes(quote.status)) {
-            return {
-              ...quote,
-              status: "rejected",
-            };
-          }
-
-          return quote;
-        })
-      );
-
-      setRequest((prev) =>
-        prev
-          ? {
-              ...prev,
-              status: "BOOKED",
-              selectedQuote: quoteId,
-              selectedProfessional: targetQuote?.professional?._id,
-            }
-          : prev
-      );
-
-      if (selectedQuoteForModal?._id === quoteId) {
-        setSelectedQuoteForModal(null);
-      }
+      navigate("/customer/bookings/create", {
+        state: {
+          quote: {
+            ...acceptedQuote,
+            status: "accepted",
+          },
+          workRequest: request,
+        },
+      });
     } catch (error) {
       console.error("Failed to accept quote:", error);
       toast.error(

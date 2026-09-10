@@ -240,6 +240,87 @@ export const createBooking = async (
   return booking;
 };
 
+export const getMyBookings = async (
+  userId,
+  role
+) => {
+  const filter =
+    role === "customer"
+      ? { customer: userId }
+      : { professional: userId };
+
+  return Booking.find(filter)
+    .populate(
+      "workRequest",
+      "requestId title description category location"
+    )
+    .populate(
+      "quote",
+      "amount estimatedDuration availableDate availableTime status"
+    )
+    .populate(
+      "customer",
+      "name email phone avatar"
+    )
+    .populate(
+      "professional",
+      "name email phone professionalProfile avatar"
+    )
+    .sort({ createdAt: -1 });
+};
+
+export const getBookingById = async (
+  bookingId,
+  userId
+) => {
+  const booking = await Booking.findById(
+    bookingId
+  )
+    .populate(
+      "workRequest",
+      "requestId title description category customCategory media location budget preferredDate preferredTimeSlot"
+    )
+    .populate(
+      "quote",
+      "amount initialAmount message estimatedDuration availableDate availableTime status"
+    )
+    .populate(
+      "customer",
+      "name email phone avatar"
+    )
+    .populate(
+      "professional",
+      "name email phone professionalProfile avatar"
+    );
+
+  if (!booking) {
+    throw new ApiError(
+      404,
+      "Booking not found"
+    );
+  }
+
+  const isCustomer =
+    booking.customer?._id?.toString() ===
+    userId?.toString() ||
+    booking.customer?.toString() ===
+    userId?.toString();
+
+  const isProfessional =
+    booking.professional?._id?.toString() ===
+    userId?.toString() ||
+    booking.professional?.toString() ===
+    userId?.toString();
+
+  if (!isCustomer && !isProfessional) {
+    throw new ApiError(
+      403,
+      "You are not authorized to view this booking"
+    );
+  }
+
+  return booking;
+};
 
 export const updateBookingStatus = async (
   bookingId,
@@ -320,6 +401,11 @@ export const updateBookingStatus = async (
   }
 
   await booking.save();
+
+  await booking.populate([
+    { path: "customer", select: "name email phone avatar" },
+    { path: "professional", select: "name email phone avatar" },
+  ]);
 
   return booking;
 };

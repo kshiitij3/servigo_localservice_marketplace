@@ -76,12 +76,17 @@ const QuoteDetails = () => {
       setIsAccepting(true);
       await acceptQuote(quote._id);
 
-      toast.success("Quote accepted successfully! Booking confirmed.");
+      toast.success("Quote accepted! Proceeding to schedule your booking...");
 
-      /*
-       * After acceptance, redirect to customer bookings page.
-       */
-      navigate("/customer/bookings");
+      navigate("/customer/bookings/create", {
+        state: {
+          quote: {
+            ...quote,
+            status: "accepted",
+          },
+          workRequest,
+        },
+      });
     } catch (error) {
       console.error("Failed to accept quote:", error);
       toast.error(
