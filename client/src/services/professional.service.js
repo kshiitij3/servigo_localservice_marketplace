@@ -10,3 +10,14 @@ export const updateAvailability = async (
     }
   );
 };
+
+export const updateProfessionalLocation = async (
+  location
+) => {
+  return await api.patch(
+    "/professionals/location",
+    {
+      location,
+    }
+  );
+};
