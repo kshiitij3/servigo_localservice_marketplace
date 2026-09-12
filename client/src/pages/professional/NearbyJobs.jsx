@@ -28,9 +28,9 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -88,8 +88,8 @@ const NearbyJobs = () => {
       },
       {
         enableHighAccuracy: true,
-        timeout: 12000,
-        maximumAge: 300000,
+        timeout: 15000,
+        maximumAge: 0,
       }
     );
   };
@@ -106,8 +106,8 @@ const NearbyJobs = () => {
         const list = Array.isArray(raw?.data)
           ? raw.data
           : Array.isArray(raw)
-          ? raw
-          : [];
+            ? raw
+            : [];
         setCategories(list);
       } catch (error) {
         console.error("Failed to load categories:", error);
@@ -140,10 +140,10 @@ const NearbyJobs = () => {
         const list = Array.isArray(raw?.data)
           ? raw.data
           : Array.isArray(raw?.requests)
-          ? raw.requests
-          : Array.isArray(raw)
-          ? raw
-          : [];
+            ? raw.requests
+            : Array.isArray(raw)
+              ? raw
+              : [];
 
         setJobs(list);
       } catch (error) {

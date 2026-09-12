@@ -12,9 +12,9 @@ const ProfileCard = ({ user }) => {
   return (
     <section className="bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-7 shadow-xs">
       <div className="flex flex-col items-center text-center">
-        {user?.avatar ? (
+        {user?.profileImage?.url || user?.avatar ? (
           <img
-            src={user.avatar}
+            src={user?.profileImage?.url || user?.avatar}
             alt={user.name || "Customer avatar"}
             className="w-24 h-24 rounded-full object-cover border-4 border-teal-50 shadow-sm"
           />

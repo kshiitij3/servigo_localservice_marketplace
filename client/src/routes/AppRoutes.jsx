@@ -27,6 +27,9 @@ import EditQuote from "../pages/professional/EditQuote";
 import ProfessionalQuoteDetails from "../pages/professional/ProfessionalQuoteDetails";
 import MyBookings from "../pages/professional/MyBookings";
 import ProfessionalBookingDetails from "../pages/professional/ProfessionalBookingDetails";
+import Availability from "../pages/professional/Availability";
+import ServiceArea from "../pages/professional/ServiceArea";
+import ProfessionalProfile from "../pages/professional/ProfessionalProfile";
 
 const AppRoutes = () => {
   return (
@@ -141,6 +144,21 @@ const AppRoutes = () => {
         <Route
           path="/professional/bookings/:id"
           element={<ProfessionalBookingDetails />}
+        />
+
+        <Route
+          path="/professional/availability"
+          element={<Availability />}
+        />
+
+        <Route
+          path="/professional/service-area"
+          element={<ServiceArea />}
+        />
+
+        <Route
+          path="/professional/profile"
+          element={<ProfessionalProfile />}
         />
 
         {/* Catch-all → landing */}

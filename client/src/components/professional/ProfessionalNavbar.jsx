@@ -7,6 +7,7 @@ import {
   HiChatBubbleLeftEllipsis,
   HiCalendarDays,
   HiClock,
+  HiGlobeAmericas,
   HiUser,
   HiArrowRightOnRectangle,
 } from "react-icons/hi2";
@@ -18,6 +19,7 @@ const links = [
   { label: "My Quotes", path: "/professional/quotes", icon: HiChatBubbleLeftEllipsis },
   { label: "Bookings", path: "/professional/bookings", icon: HiCalendarDays },
   { label: "Availability", path: "/professional/availability", icon: HiClock },
+  { label: "Service Area", path: "/professional/service-area", icon: HiGlobeAmericas },
   { label: "Profile", path: "/professional/profile", icon: HiUser },
 ];
 

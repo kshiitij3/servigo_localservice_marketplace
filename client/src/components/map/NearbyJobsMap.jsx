@@ -106,11 +106,11 @@ const NearbyJobsMap = ({
           const budgetText =
             budget?.min && budget?.max
               ? `₹${Number(budget.min).toLocaleString("en-IN")} - ₹${Number(
-                  budget.max
-                ).toLocaleString("en-IN")}`
+                budget.max
+              ).toLocaleString("en-IN")}`
               : budget?.max
-              ? `Up to ₹${Number(budget.max).toLocaleString("en-IN")}`
-              : "Budget specified";
+                ? `Up to ₹${Number(budget.max).toLocaleString("en-IN")}`
+                : "Budget specified";
 
           return (
             <Marker
