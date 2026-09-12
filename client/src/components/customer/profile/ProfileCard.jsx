@@ -1,34 +1,214 @@
+import { useState, useRef } from "react";
+import toast from "react-hot-toast";
 import {
   HiUser,
   HiEnvelope,
   HiPhone,
   HiShieldCheck,
+  HiCamera,
+  HiTrash,
 } from "react-icons/hi2";
 
+import useAuth from "../../../hooks/useAuth";
+import { uploadMedia } from "../../../services/upload.service";
+import { updateProfile } from "../../../services/auth.service";
+
 const ProfileCard = ({ user }) => {
-  const initial =
-    user?.name?.charAt(0)?.toUpperCase() || "C";
+  const { updateUser } = useAuth();
+  const fileInputRef = useRef(null);
+
+  const [uploading, setUploading] = useState(false);
+
+  const initial = user?.name?.charAt(0)?.toUpperCase() || "C";
+  const imageUrl = user?.profileImage?.url || user?.avatar || "";
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file (JPG, PNG, or WEBP).");
+      return;
+    }
+
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("Image file is too large. Maximum size is 8MB.");
+      return;
+    }
+
+    try {
+      setUploading(true);
+      const uploadToast = toast.loading("Uploading photo to Cloudinary...");
+
+      // 1. Upload to Cloudinary via server upload endpoint
+      const uploadRes = await uploadMedia(file);
+      const uploadedData = uploadRes?.data?.data || uploadRes?.data;
+
+      if (!uploadedData?.url) {
+        throw new Error("Cloudinary upload failed: no URL returned");
+      }
+
+      // 2. Persist { url, publicId } to User model in MongoDB
+      const updateRes = await updateProfile({
+        profileImage: {
+          url: uploadedData.url,
+          publicId: uploadedData.publicId || "",
+        },
+      });
+
+      const updatedUser = updateRes?.data?.data || updateRes?.data;
+
+      // 3. Update AuthContext & localStorage for immediate UI reactivity
+      if (updatedUser) {
+        updateUser(updatedUser);
+      } else if (user) {
+        updateUser({
+          ...user,
+          profileImage: {
+            url: uploadedData.url,
+            publicId: uploadedData.publicId || "",
+          },
+        });
+      }
+
+      toast.dismiss(uploadToast);
+      toast.success("Profile photo updated successfully!");
+    } catch (error) {
+      console.error("Customer profile photo upload failed:", error);
+      toast.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to upload profile photo."
+      );
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    if (!imageUrl) return;
+
+    try {
+      setUploading(true);
+      const removeToast = toast.loading("Removing photo...");
+
+      const updateRes = await updateProfile({
+        profileImage: {
+          url: "",
+          publicId: "",
+        },
+      });
+
+      const updatedUser = updateRes?.data?.data || updateRes?.data;
+
+      if (updatedUser) {
+        updateUser(updatedUser);
+      } else if (user) {
+        updateUser({
+          ...user,
+          profileImage: {
+            url: "",
+            publicId: "",
+          },
+        });
+      }
+
+      toast.dismiss(removeToast);
+      toast.success("Profile photo removed.");
+    } catch (error) {
+      console.error("Failed to remove profile photo:", error);
+      toast.error("Failed to remove profile photo.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <section className="bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-7 shadow-xs">
-      <div className="flex flex-col items-center text-center">
-        {user?.profileImage?.url || user?.avatar ? (
-          <img
-            src={user?.profileImage?.url || user?.avatar}
-            alt={user.name || "Customer avatar"}
-            className="w-24 h-24 rounded-full object-cover border-4 border-teal-50 shadow-sm"
-          />
-        ) : (
-          <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-[#1a7a6e] to-[#2a9d8f] text-white flex items-center justify-center text-3xl font-black shadow-sm ring-4 ring-teal-50">
-            {initial}
-          </div>
-        )}
+      {/* Hidden File Input for Cloudinary Upload */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+      />
 
-        <h2 className="text-2xl font-bold text-gray-900 mt-4">
+      <div className="flex flex-col items-center text-center">
+        {/* Avatar with Camera Overlay */}
+        <div className="relative group">
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={user?.name || "Customer avatar"}
+              className={`w-24 h-24 rounded-full object-cover border-4 border-teal-50 shadow-sm transition-opacity ${
+                uploading ? "opacity-40" : "opacity-100"
+              }`}
+            />
+          ) : (
+            <div
+              className={`w-24 h-24 rounded-full bg-gradient-to-tr from-[#1a7a6e] to-[#2a9d8f] text-white flex items-center justify-center text-3xl font-black shadow-sm ring-4 ring-teal-50 transition-opacity ${
+                uploading ? "opacity-40" : "opacity-100"
+              }`}
+            >
+              {initial}
+            </div>
+          )}
+
+          {/* Upload Spinner Overlay */}
+          {uploading && (
+            <div className="absolute inset-0 rounded-full flex items-center justify-center bg-black/30 backdrop-blur-xs">
+              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+
+          {/* Camera Button Overlay */}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            title="Upload new profile photo"
+            className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#1a7a6e] hover:bg-[#155f55] text-white flex items-center justify-center shadow-md border-2 border-white transition-transform active:scale-90 cursor-pointer disabled:opacity-50"
+          >
+            <HiCamera className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Action link for photo management */}
+        <div className="flex items-center gap-3 mt-3">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="text-xs font-semibold text-[#1a7a6e] hover:underline cursor-pointer disabled:opacity-50"
+          >
+            {imageUrl ? "Change Photo" : "Upload Photo"}
+          </button>
+
+          {imageUrl && (
+            <>
+              <span className="text-gray-300">•</span>
+              <button
+                type="button"
+                onClick={handleRemovePhoto}
+                disabled={uploading}
+                className="text-xs font-semibold text-red-500 hover:text-red-700 flex items-center gap-1 cursor-pointer disabled:opacity-50"
+              >
+                <HiTrash className="w-3.5 h-3.5" />
+                <span>Remove</span>
+              </button>
+            </>
+          )}
+        </div>
+
+        <h2 className="text-2xl font-bold text-gray-900 mt-3">
           {user?.name || "Customer"}
         </h2>
 
-        <p className="text-sm text-gray-500 mt-0.5">
+        <p className="text-sm text-gray-500 mt-0.5 break-all">
           {user?.email || "Email not available"}
         </p>
 

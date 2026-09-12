@@ -30,6 +30,7 @@ import ProfessionalBookingDetails from "../pages/professional/ProfessionalBookin
 import Availability from "../pages/professional/Availability";
 import ServiceArea from "../pages/professional/ServiceArea";
 import ProfessionalProfile from "../pages/professional/ProfessionalProfile";
+import ProfessionalSettings from "../pages/professional/ProfessionalSettings";
 
 const AppRoutes = () => {
   return (
@@ -159,6 +160,11 @@ const AppRoutes = () => {
         <Route
           path="/professional/profile"
           element={<ProfessionalProfile />}
+        />
+
+        <Route
+          path="/professional/settings"
+          element={<ProfessionalSettings />}
         />
 
         {/* Catch-all → landing */}

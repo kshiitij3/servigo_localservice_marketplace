@@ -22,7 +22,7 @@ const links = [
 const CustomerNavbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const go = (path) => {
@@ -73,7 +73,15 @@ const CustomerNavbar = () => {
                       : "text-gray-600 hover:text-[#1a7a6e] hover:bg-gray-50"
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${isActive ? "text-[#1a7a6e]" : "text-gray-400"}`} />
+                  {path === "/customer/profile" && user?.profileImage?.url ? (
+                    <img
+                      src={user.profileImage.url}
+                      alt="Profile"
+                      className="w-4 h-4 rounded-full object-cover ring-1 ring-[#1a7a6e]/40"
+                    />
+                  ) : (
+                    <Icon className={`w-4 h-4 ${isActive ? "text-[#1a7a6e]" : "text-gray-400"}`} />
+                  )}
                   <span>{label}</span>
                 </button>
               );

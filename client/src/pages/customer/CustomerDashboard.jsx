@@ -52,13 +52,26 @@ const CustomerDashboard = () => {
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         
         {/* Welcome Section */}
-        <section className="mb-8">
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
-            Welcome back, {user?.name || "Customer"} 👋
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Find trusted, background-checked professionals for your home & business services.
-          </p>
+        <section className="mb-8 flex items-center gap-4">
+          {user?.profileImage?.url ? (
+            <img
+              src={user.profileImage.url}
+              alt={user?.name || "Customer"}
+              className="w-14 h-14 rounded-2xl object-cover border-2 border-teal-100 shadow-sm shrink-0"
+            />
+          ) : (
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#1a7a6e] to-[#2a9d8f] text-white flex items-center justify-center font-black text-2xl shadow-sm ring-2 ring-teal-50 shrink-0">
+              {user?.name?.charAt(0)?.toUpperCase() || "C"}
+            </div>
+          )}
+          <div>
+            <h1 className="text-2xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
+              Welcome back, {user?.name || "Customer"} 👋
+            </h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Find trusted, background-checked professionals for your home & business services.
+            </p>
+          </div>
         </section>
 
         {/* Hero CTA Box */}
