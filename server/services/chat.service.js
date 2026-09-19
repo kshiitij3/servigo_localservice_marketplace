@@ -4,6 +4,7 @@ import Quote from "../models/Quote.js";
 import User from "../models/User.js";
 import WorkRequest from "../models/WorkRequest.js";
 import ApiError from "../utils/ApiError.js";
+import { getIO } from "../socket/io.js";
 
 const isParticipant = (chat, userId) =>
   chat.customer.toString() === userId.toString() ||
@@ -279,4 +280,197 @@ export const markChatAsRead = async (chatId, userId) => {
   );
 
   return { chatId, userId };
+};
+
+export const negotiateQuote = async ({
+  chatId,
+  userId,
+  newAmount,
+}) => {
+  if (!newAmount || Number(newAmount) <= 0) {
+    throw new ApiError(
+      400,
+      "Amount must be greater than zero"
+    );
+  }
+
+  const chat = await Chat.findById(chatId);
+
+  if (!chat) {
+    throw new ApiError(
+      404,
+      "Chat not found"
+    );
+  }
+
+  const isChatUser =
+    chat.customer.toString() === userId.toString() ||
+    chat.professional.toString() === userId.toString();
+
+  if (!isChatUser) {
+    throw new ApiError(
+      403,
+      "You are not a participant in this chat"
+    );
+  }
+
+  if (chat.status !== "active") {
+    throw new ApiError(
+      400,
+      "This chat is not active"
+    );
+  }
+
+  const quote = await Quote.findById(
+    chat.quote
+  );
+
+  if (!quote) {
+    throw new ApiError(
+      404,
+      "Quote not found"
+    );
+  }
+
+  if (
+    quote._id.toString() !==
+    chat.quote.toString()
+  ) {
+    throw new ApiError(
+      400,
+      "Quote does not belong to this chat"
+    );
+  }
+
+  if (
+    ["accepted", "rejected", "withdrawn"].includes(
+      quote.status
+    )
+  ) {
+    throw new ApiError(
+      400,
+      "This quote is no longer available for negotiation"
+    );
+  }
+
+  const previousAmount = Number(
+    quote.amount
+  );
+
+  const amount = Number(newAmount);
+
+  if (amount === previousAmount) {
+    throw new ApiError(
+      400,
+      "New amount must be different from the current amount"
+    );
+  }
+
+  // Record previous amount in quote revisions
+  quote.revisions = quote.revisions || [];
+  quote.revisions.push({
+    amount: previousAmount,
+    message: quote.message || "",
+    createdAt: new Date(),
+  });
+
+  quote.amount = amount;
+  quote.status = "negotiating";
+
+  await quote.save();
+
+  const message = await Message.create({
+    chat: chat._id,
+    sender: userId,
+    type: "quote_update",
+    content: `Quote changed from ₹${previousAmount.toLocaleString("en-IN")} to ₹${amount.toLocaleString("en-IN")}`,
+    quoteUpdate: {
+      previousAmount,
+      newAmount: amount,
+    },
+  });
+
+  chat.lastMessage = message._id;
+  chat.lastMessageAt = message.createdAt;
+
+  await chat.save();
+
+  const populatedMessage =
+    await Message.findById(
+      message._id
+    ).populate(
+      "sender",
+      "name email role profileImage"
+    );
+
+  const populatedQuote =
+    await Quote.findById(
+      quote._id
+    );
+
+  return {
+    message: populatedMessage,
+    quote: populatedQuote,
+  };
+};
+
+export const notifyQuoteAccepted = async ({
+  quote,
+  customerId,
+}) => {
+  const chat = await Chat.findOne({
+    quote: quote._id,
+  });
+
+  /*
+   * A chat may not exist if the customer
+   * accepted the quote without opening chat.
+   *
+   * That's okay. The quote is still accepted.
+   */
+  if (!chat) {
+    return null;
+  }
+
+  /*
+   * Create a system message so the event
+   * is permanently visible in chat history.
+   */
+  const message = await Message.create({
+    chat: chat._id,
+    sender: customerId,
+    type: "system",
+    content: "Quote accepted. Negotiation is complete.",
+  });
+
+  /*
+   * Update chat preview.
+   */
+  chat.lastMessage = message._id;
+  chat.lastMessageAt = message.createdAt;
+
+  await chat.save();
+
+  const populatedMessage = await Message.findById(message._id).populate(
+    "sender",
+    "name email role profileImage"
+  );
+
+  /*
+   * Notify both participants in real time.
+   */
+  try {
+    const io = getIO();
+    io.to(`chat:${chat._id}`).emit("quote:accepted", {
+      quote: quote.toObject ? quote.toObject() : quote,
+      message: populatedMessage,
+    });
+  } catch (ioErr) {
+    console.warn("Socket.IO notification skipped or failed:", ioErr.message);
+  }
+
+  return {
+    chat,
+    message: populatedMessage,
+  };
 };

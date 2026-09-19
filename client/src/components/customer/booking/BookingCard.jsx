@@ -74,7 +74,10 @@ const BookingCard = ({ booking }) => {
 
           {booking?.workRequest?.category && (
             <span className="inline-block mt-1 px-2.5 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 text-gray-600 capitalize">
-              {booking.workRequest.category}
+              {booking.workRequest.category?.name ||
+                (typeof booking.workRequest.category === "string"
+                  ? booking.workRequest.category
+                  : booking.workRequest.customCategory || "Service")}
             </span>
           )}
         </div>

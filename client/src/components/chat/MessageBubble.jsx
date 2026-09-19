@@ -15,11 +15,12 @@ const MessageBubble = ({
   if (message.type === "quote_update") {
     return (
       <div className="flex justify-center my-4">
-        <div className="w-full max-w-sm border border-teal-200/80 bg-teal-50/70 rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-bold text-[#1a7a6e] uppercase tracking-wider">
+        <div className="w-full max-w-sm border border-teal-200 bg-gradient-to-b from-teal-50/80 to-white rounded-2xl p-4 shadow-xs">
+          <div className="flex items-center justify-between gap-2 border-b border-teal-100 pb-2 mb-3">
+            <span className="text-[11px] font-bold text-[#1a7a6e] uppercase tracking-wider flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#1a7a6e]" />
               Quote Updated
-            </p>
+            </span>
             <span className="text-[11px] text-gray-400">
               {new Date(message.createdAt).toLocaleTimeString([], {
                 hour: "2-digit",
@@ -28,20 +29,22 @@ const MessageBubble = ({
             </span>
           </div>
 
-          <div className="flex items-center justify-between mt-2.5">
+          <div className="flex items-center justify-center gap-3 py-1">
             {message.quoteUpdate?.previousAmount !== undefined && (
-              <span className="text-sm text-gray-400 line-through">
+              <span className="text-base font-semibold text-gray-400 line-through">
                 ₹{Number(message.quoteUpdate.previousAmount).toLocaleString("en-IN")}
               </span>
             )}
 
-            <span className="text-xl font-extrabold text-[#1a7a6e]">
+            <span className="text-gray-400 font-bold text-lg">→</span>
+
+            <span className="text-2xl font-black text-[#1a7a6e]">
               ₹{Number(message.quoteUpdate?.newAmount ?? 0).toLocaleString("en-IN")}
             </span>
           </div>
 
           {message.content && (
-            <p className="text-xs text-gray-600 mt-2 bg-white/70 rounded-xl p-2.5 border border-teal-100">
+            <p className="text-xs text-gray-600 mt-2.5 bg-teal-50/50 rounded-xl p-2.5 border border-teal-100/70 text-center font-medium">
               {message.content}
             </p>
           )}

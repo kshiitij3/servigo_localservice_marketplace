@@ -1,5 +1,9 @@
 import Chat from "../models/Chat.js";
-import { createMessage, markChatAsRead } from "../services/chat.service.js";
+import {
+  createMessage,
+  markChatAsRead,
+  negotiateQuote,
+} from "../services/chat.service.js";
 
 const getChatRoom = (chatId) => {
   return `chat:${chatId}`;
@@ -139,6 +143,65 @@ export const registerChatSocket = (io) => {
         callback({ success: true, data: message });
       } catch (error) {
         callback({ success: false, message: error.message || "Failed to send message" });
+      }
+    });
+
+    /*
+     * REAL-TIME QUOTE NEGOTIATION
+     */
+    socket.on("quote:negotiate", async (payload, callback = () => {}) => {
+      try {
+        const { chatId, newAmount } = payload || {};
+
+        if (!chatId) {
+          throw new Error("Chat ID is required");
+        }
+
+        if (!newAmount) {
+          throw new Error("New amount is required");
+        }
+
+        const result = await negotiateQuote({
+          chatId,
+          userId: socket.user._id,
+          newAmount,
+        });
+
+        // Broadcast updated quote and message to everyone in the chat room
+        io.to(getChatRoom(chatId)).emit("quote:updated", {
+          quote: result.quote,
+          message: result.message,
+        });
+
+        callback({
+          success: true,
+          data: result,
+        });
+      } catch (error) {
+        console.error("Quote negotiation error:", error.message);
+        socket.emit("chat:error", {
+          message: error.message || "Failed to negotiate quote",
+        });
+
+        callback({
+          success: false,
+          message: error.message || "Failed to negotiate quote",
+        });
+      }
+    });
+
+    /*
+     * REAL-TIME QUOTE ACCEPTED NOTIFICATION
+     */
+    socket.on("quote:accepted", async (payload, callback = () => {}) => {
+      try {
+        const { chatId, quote } = payload || {};
+        if (chatId) {
+          io.to(getChatRoom(chatId)).emit("quote:accepted", { quote });
+        }
+        callback({ success: true });
+      } catch (error) {
+        callback({ success: false, message: error.message });
       }
     });
 

@@ -15,6 +15,7 @@ import connectDB from "./config/db.js";
 
 import { socketAuth } from "./socket/socket.auth.js";
 import { registerChatSocket } from "./socket/chat.socket.js";
+import { setIO } from "./socket/io.js";
 
 const server = http.createServer(app);
 
@@ -27,6 +28,8 @@ const io = new Server(server, {
     credentials: true,
   },
 });
+
+setIO(io);
 
 const PORT = process.env.PORT || 5000;
 
