@@ -5,7 +5,6 @@ import {
   HiArrowPath,
   HiExclamationTriangle,
   HiMagnifyingGlass,
-  HiSparkles,
   HiViewColumns,
   HiMap,
 } from "react-icons/hi2";
@@ -49,7 +48,7 @@ const NearbyJobs = () => {
   const [loadingLocation, setLoadingLocation] = useState(true);
   const [loadingJobs, setLoadingJobs] = useState(false);
 
-  const getCurrentLocation = () => {
+  const requestLocation = () => {
     if (!navigator.geolocation) {
       toast.error("Geolocation is not supported by your browser.");
       setLoadingLocation(false);
@@ -95,7 +94,43 @@ const NearbyJobs = () => {
   };
 
   useEffect(() => {
-    getCurrentLocation();
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const nextLatitude = position.coords.latitude;
+        const nextLongitude = position.coords.longitude;
+
+        setLatitude(nextLatitude);
+        setLongitude(nextLongitude);
+
+        try {
+          await updateProfessionalLocation({
+            type: "Point",
+            coordinates: [nextLongitude, nextLatitude],
+            address: "",
+            city: "",
+            state: "",
+            pincode: "",
+          });
+        } catch (error) {
+          console.error("Failed to save professional location:", error);
+        }
+
+        setLoadingLocation(false);
+      },
+      (error) => {
+        console.error("Location error:", error);
+        setLoadingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      }
+    );
   }, []);
 
   useEffect(() => {
@@ -223,7 +258,7 @@ const NearbyJobs = () => {
 
               <button
                 type="button"
-                onClick={getCurrentLocation}
+                onClick={requestLocation}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-teal-50 border border-teal-200/80 text-[#1a7a6e] font-semibold text-xs hover:bg-teal-100/70 transition cursor-pointer"
               >
                 <HiArrowPath className={`w-4 h-4 ${loadingLocation ? "animate-spin" : ""}`} />
@@ -281,7 +316,7 @@ const NearbyJobs = () => {
 
               <button
                 type="button"
-                onClick={getCurrentLocation}
+                onClick={requestLocation}
                 className="px-4 py-2 rounded-xl bg-[#1a7a6e] hover:bg-[#155f55] text-white font-semibold text-xs shadow-xs transition cursor-pointer"
               >
                 Enable Location Access

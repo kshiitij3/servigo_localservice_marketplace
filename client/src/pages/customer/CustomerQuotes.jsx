@@ -1,15 +1,14 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   HiArrowLeft,
-  HiArrowPath,
-  HiExclamationTriangle,
   HiCheckCircle,
 } from "react-icons/hi2";
 
 import { getWorkRequestById } from "../../services/workRequest.service";
 import { getQuotesForWorkRequest, acceptQuote } from "../../services/quote.service";
+import { createChat } from "../../services/chat.service";
 import CustomerNavbar from "../../components/customer/CustomerNavbar";
 
 import {
@@ -34,36 +33,23 @@ const CustomerQuotes = () => {
   const [sortBy, setSortBy] = useState("amount_asc");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    if (!id) return;
     try {
       setLoading(true);
       setFetchError(null);
 
-      const [requestResponse, quotesResponse] = await Promise.all([
+      const [reqResponse, quotesResponse] = await Promise.all([
         getWorkRequestById(id),
         getQuotesForWorkRequest(id),
       ]);
 
-      // Unpack work request
-      const rawReq = requestResponse?.data;
-      const reqData = rawReq?.data?._id
-        ? rawReq.data
-        : rawReq?._id
-        ? rawReq
-        : rawReq?.data || null;
-
-      // Unpack quotes array
-      const rawQuotes = quotesResponse?.data;
-      const quotesData = Array.isArray(rawQuotes?.data)
-        ? rawQuotes.data
-        : Array.isArray(rawQuotes)
-        ? rawQuotes
-        : Array.isArray(rawQuotes?.quotes)
-        ? rawQuotes.quotes
-        : [];
+      const reqData = reqResponse?.data?.data || reqResponse?.data;
+      const quotesData =
+        quotesResponse?.data?.data || quotesResponse?.data || [];
 
       setRequest(reqData);
-      setQuotes(quotesData);
+      setQuotes(Array.isArray(quotesData) ? quotesData : []);
     } catch (error) {
       console.error("Failed to load quotes:", error);
       const errMsg =
@@ -75,13 +61,68 @@ const CustomerQuotes = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
-    if (id) {
-      fetchData();
-    }
+    let mounted = true;
+
+    const loadData = async () => {
+      if (!id) return;
+      try {
+        setLoading(true);
+        setFetchError(null);
+
+        const [reqResponse, quotesResponse] = await Promise.all([
+          getWorkRequestById(id),
+          getQuotesForWorkRequest(id),
+        ]);
+
+        if (!mounted) return;
+        const reqData = reqResponse?.data?.data || reqResponse?.data;
+        const quotesData =
+          quotesResponse?.data?.data || quotesResponse?.data || [];
+
+        setRequest(reqData);
+        setQuotes(Array.isArray(quotesData) ? quotesData : []);
+      } catch (error) {
+        if (!mounted) return;
+        console.error("Failed to load quotes:", error);
+        const errMsg =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to load quotes.";
+        setFetchError(errMsg);
+        toast.error(errMsg);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadData();
+
+    return () => {
+      mounted = false;
+    };
   }, [id]);
+
+  const handleStartChat = async (quote) => {
+    try {
+      const response = await createChat(quote._id);
+      const chatData = response?.data?.data || response?.data;
+      if (chatData?._id) {
+        navigate(`/chat/${chatData._id}`);
+      } else {
+        navigate("/chat");
+      }
+    } catch (err) {
+      console.error("Failed to start chat:", err);
+      toast.error(
+        err?.response?.data?.message || err?.message || "Failed to start conversation"
+      );
+    }
+  };
 
   const handleAcceptQuote = async (quoteId) => {
     const targetQuote = quotes.find((q) => q._id === quoteId);
@@ -103,7 +144,7 @@ const CustomerQuotes = () => {
     try {
       setAcceptingQuoteId(quoteId);
 
-      await acceptQuote(quoteId);
+      const response = await acceptQuote(quoteId);
 
       toast.success(
         response?.data?.message ||
@@ -114,7 +155,7 @@ const CustomerQuotes = () => {
       const acceptedQuote =
         quotes.find((quote) => quote._id === quoteId) || targetQuote;
 
-      navigate("/customer/bookings/create", {
+      navigate(`/customer/bookings/create?quoteId=${quoteId}`, {
         state: {
           quote: {
             ...acceptedQuote,
@@ -138,47 +179,58 @@ const CustomerQuotes = () => {
   const getDurationHoursApprox = (quote) => {
     const val = quote?.estimatedDuration?.value || 999;
     const unit = quote?.estimatedDuration?.unit || "hours";
-    if (unit === "minutes") return val / 60;
     if (unit === "days") return val * 24;
+    if (unit === "minutes") return val / 60;
     return val;
   };
 
-  // Filtered & Sorted Quotes
   const processedQuotes = useMemo(() => {
-    let list = [...quotes];
+    let result = [...quotes];
 
     if (statusFilter !== "all") {
-      list = list.filter((q) => q.status === statusFilter);
+      result = result.filter((q) => q.status === statusFilter);
     }
 
-    list.sort((a, b) => {
-      if (sortBy === "amount_asc") {
-        return (a.amount || 0) - (b.amount || 0);
-      }
-      if (sortBy === "amount_desc") {
-        return (b.amount || 0) - (a.amount || 0);
-      }
-      if (sortBy === "rating_desc") {
-        const ratingA =
-          a.professional?.professionalProfile?.averageRating || 0;
-        const ratingB =
-          b.professional?.professionalProfile?.averageRating || 0;
-        return ratingB - ratingA;
-      }
-      if (sortBy === "duration_asc") {
-        return getDurationHoursApprox(a) - getDurationHoursApprox(b);
-      }
-      return 0;
-    });
+    switch (sortBy) {
+      case "amount_asc":
+        result.sort((a, b) => (a.amount || 0) - (b.amount || 0));
+        break;
+      case "amount_desc":
+        result.sort((a, b) => (b.amount || 0) - (a.amount || 0));
+        break;
+      case "duration_asc":
+        result.sort(
+          (a, b) => getDurationHoursApprox(a) - getDurationHoursApprox(b)
+        );
+        break;
+      case "rating_desc":
+        result.sort((a, b) => {
+          const rA =
+            a.professional?.professionalProfile?.averageRating || 0;
+          const rB =
+            b.professional?.professionalProfile?.averageRating || 0;
+          return rB - rA;
+        });
+        break;
+      case "date_asc":
+        result.sort((a, b) => {
+          const dA = a.availableDate ? new Date(a.availableDate) : new Date(9999, 0, 1);
+          const dB = b.availableDate ? new Date(b.availableDate) : new Date(9999, 0, 1);
+          return dA - dB;
+        });
+        break;
+      default:
+        break;
+    }
 
-    return list;
+    return result;
   }, [quotes, statusFilter, sortBy]);
 
   const lowestQuote = useMemo(() => {
     if (!quotes.length) return null;
     return quotes.reduce(
-      (min, q) => (!min || q.amount < min ? q.amount : min),
-      null
+      (min, q) => (q.amount < min.amount ? q : min),
+      quotes[0]
     );
   }, [quotes]);
 
@@ -190,7 +242,9 @@ const CustomerQuotes = () => {
     return (
       <div className="min-h-screen bg-gray-50/70 pb-16">
         <CustomerNavbar />
-        <QuotesSkeleton />
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <QuotesSkeleton />
+        </main>
       </div>
     );
   }
@@ -199,42 +253,32 @@ const CustomerQuotes = () => {
     return (
       <div className="min-h-screen bg-gray-50/70 pb-16">
         <CustomerNavbar />
-
-        <div className="max-w-4xl mx-auto px-4 py-16">
-          <div className="bg-white rounded-2xl border border-gray-200/80 p-10 sm:p-12 text-center shadow-xs">
-            <div className="w-16 h-16 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-4">
-              <HiExclamationTriangle className="w-8 h-8" />
-            </div>
-
-            <h1 className="text-2xl font-bold text-gray-900">
-              {fetchError ? "Unable to Load Quotes" : "Work Request Not Found"}
-            </h1>
-
-            <p className="text-gray-500 mt-2 max-w-md mx-auto text-sm">
-              {fetchError ||
-                "The requested service request could not be located or may have been deleted."}
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-white border border-gray-200/80 rounded-2xl p-10 text-center max-w-lg mx-auto shadow-xs">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">
+              Failed to load Quotes
+            </h2>
+            <p className="text-gray-500 text-sm mb-6">
+              {fetchError || "We could not find the requested service."}
             </p>
-
-            <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
-              <button
-                type="button"
-                onClick={() => navigate("/customer/work-requests")}
-                className="px-5 py-2.5 rounded-xl bg-[#1a7a6e] text-white font-semibold text-sm hover:bg-[#156359] transition shadow-xs cursor-pointer"
-              >
-                Back to My Requests
-              </button>
-
+            <div className="flex items-center justify-center gap-3">
               <button
                 type="button"
                 onClick={fetchData}
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl border border-gray-300 bg-white text-gray-700 font-semibold text-sm hover:bg-gray-50 transition cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-[#1a7a6e] hover:bg-[#156359] text-white font-semibold text-sm transition cursor-pointer"
               >
-                <HiArrowPath className="w-4 h-4" />
-                <span>Try Again</span>
+                Retry
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/customer/work-requests")}
+                className="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition cursor-pointer"
+              >
+                Back to Requests
               </button>
             </div>
           </div>
-        </div>
+        </main>
       </div>
     );
   }
@@ -292,7 +336,7 @@ const CustomerQuotes = () => {
             <button
               type="button"
               onClick={() => navigate(`/customer/work-requests/${id}`)}
-              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-700 text-white font-semibold text-xs hover:bg-emerald-800 transition shrink-0"
+              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-700 text-white font-semibold text-xs hover:bg-emerald-800 transition shrink-0 cursor-pointer"
             >
               <span>View Details</span>
             </button>
@@ -338,6 +382,7 @@ const CustomerQuotes = () => {
                   acceptingQuoteId={acceptingQuoteId}
                   onAccept={handleAcceptQuote}
                   onViewDetails={handleViewQuote}
+                  onChat={handleStartChat}
                 />
               ))}
             </div>
@@ -348,11 +393,12 @@ const CustomerQuotes = () => {
       {/* Quote Details Modal Component */}
       <QuoteDetailsModal
         quote={selectedQuoteForModal}
-        requestTitle={request?.title}
-        isJobBooked={isJobBooked}
-        acceptingQuoteId={acceptingQuoteId}
+        isOpen={Boolean(selectedQuoteForModal)}
         onClose={() => setSelectedQuoteForModal(null)}
         onAccept={handleAcceptQuote}
+        onChat={handleStartChat}
+        isJobBooked={isJobBooked}
+        acceptingQuoteId={acceptingQuoteId}
       />
     </div>
   );

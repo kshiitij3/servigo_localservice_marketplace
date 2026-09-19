@@ -33,41 +33,39 @@ const ProfessionalBookingDetails = () => {
   useEffect(() => {
     let isMounted = true;
 
-    const fetchBooking = async () => {
-      try {
-        setLoading(true);
-        const response = await getBookingById(id);
-        const data = response?.data?.data || response?.data || null;
+    if (!id) {
+      return;
+    }
 
-        if (isMounted && data) {
-          setBooking(data);
-        }
-      } catch (error) {
-        console.error("Failed to load booking details:", error);
-        if (isMounted && !booking) {
-          toast.error(
-            error?.response?.data?.message ||
-              error?.message ||
-              "Failed to load booking details."
-          );
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    if (id && (!booking || !booking.workRequest?.title)) {
-      fetchBooking();
-    } else {
-      setLoading(false);
+    if (!booking || !booking.workRequest?.title) {
+      getBookingById(id)
+        .then((response) => {
+          const data = response?.data?.data || response?.data || null;
+          if (isMounted && data) {
+            setBooking(data);
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to load booking details:", error);
+          if (isMounted) {
+            toast.error(
+              error?.response?.data?.message ||
+                error?.message ||
+                "Failed to load booking details."
+            );
+          }
+        })
+        .finally(() => {
+          if (isMounted) {
+            setLoading(false);
+          }
+        });
     }
 
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, [id, booking]);
 
   if (loading) {
     return (

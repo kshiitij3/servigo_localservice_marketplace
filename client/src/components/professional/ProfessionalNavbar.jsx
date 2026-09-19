@@ -21,6 +21,7 @@ const primaryLinks = [
   { label: "Nearby Jobs", path: "/professional/jobs", icon: HiMapPin },
   { label: "My Quotes", path: "/professional/quotes", icon: HiChatBubbleLeftEllipsis },
   { label: "Bookings", path: "/professional/bookings", icon: HiCalendarDays },
+  { label: "Messages", path: "/chat", icon: HiChatBubbleLeftEllipsis },
 ];
 
 // Profile & Configuration dropdown items

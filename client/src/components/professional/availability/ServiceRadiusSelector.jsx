@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { HiCheck, HiSignal, HiSparkles } from "react-icons/hi2";
 
 const radiusPresets = [5, 10, 20, 35, 50, 75];
@@ -8,13 +8,13 @@ const ServiceRadiusSelector = ({
   onSave,
   loading = false,
 }) => {
+  const [prevInitialRadius, setPrevInitialRadius] = useState(initialRadius);
   const [radius, setRadius] = useState(initialRadius);
 
-  useEffect(() => {
-    if (initialRadius) {
-      setRadius(initialRadius);
-    }
-  }, [initialRadius]);
+  if (initialRadius !== prevInitialRadius) {
+    setPrevInitialRadius(initialRadius);
+    setRadius(initialRadius);
+  }
 
   const handleChange = (e) => {
     setRadius(Number(e.target.value));

@@ -1,8 +1,6 @@
 import { useState, useRef } from "react";
 import toast from "react-hot-toast";
 import {
-  HiUser,
-  HiEnvelope,
   HiPhone,
   HiShieldCheck,
   HiClock,

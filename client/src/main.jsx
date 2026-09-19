@@ -4,6 +4,7 @@ import { Toaster } from "react-hot-toast";
 
 import App from "./App";
 import { AuthProvider } from "./context/AuthContext";
+import { SocketProvider } from "./context/SocketContext";
 
 import "./index.css";
 import "leaflet/dist/leaflet.css";
@@ -11,7 +12,10 @@ import "leaflet/dist/leaflet.css";
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <AuthProvider>
-      <App />
+      <SocketProvider>
+        <App />
+      </SocketProvider>
+
       <Toaster position="top-right" />
     </AuthProvider>
   </React.StrictMode>

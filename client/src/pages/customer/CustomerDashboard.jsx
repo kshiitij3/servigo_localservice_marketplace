@@ -8,7 +8,7 @@ import {
   HiCheckBadge,
   HiSparkles,
   HiArrowRight,
-  HiFolderOpen
+  HiFolderOpen,
 } from "react-icons/hi2";
 import useAuth from "../../hooks/useAuth";
 import { getMyWorkRequests } from "../../services/workRequest.service";
@@ -40,8 +40,14 @@ const CustomerDashboard = () => {
     fetchRequests();
   }, []);
 
-  const countByStatus = (status) =>
-    requests.filter((request) => request.status === status).length;
+  const countByStatus = (status) => {
+    if (status === "OPEN") {
+      return requests.filter(
+        (request) => request.status === "OPEN" || request.status === "QUOTED"
+      ).length;
+    }
+    return requests.filter((request) => request.status === status).length;
+  };
 
   const createRequest = () => navigate("/customer/work-requests/new");
 

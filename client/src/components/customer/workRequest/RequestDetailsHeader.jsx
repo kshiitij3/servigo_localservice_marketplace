@@ -84,7 +84,7 @@ const RequestDetailsHeader = ({
                 <span>View Quotes ({quoteCount})</span>
               </button>
 
-              {request.status === "OPEN" && (
+              {(request.status === "OPEN" || request.status === "QUOTED") && (
                 <button
                   type="button"
                   onClick={onEdit}

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   HiArrowLeft,
@@ -7,22 +7,136 @@ import {
   HiMapPin,
   HiCheck,
   HiExclamationCircle,
+  HiChatBubbleLeftEllipsis,
 } from "react-icons/hi2";
 
 import CustomerNavbar from "../../components/customer/CustomerNavbar";
 import QuoteStatus from "../../components/customer/quote/QuoteStatus";
 import QuoteSummary from "../../components/customer/quote/QuoteSummary";
 import QuoteRevision from "../../components/customer/quote/QuoteRevision";
-import { acceptQuote } from "../../services/quote.service";
+import { acceptQuote, getQuoteById } from "../../services/quote.service";
+import { createChat } from "../../services/chat.service";
 
 const QuoteDetails = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [quote, setQuote] = useState(location.state?.quote || null);
+  const [workRequest, setWorkRequest] = useState(
+    location.state?.workRequest || location.state?.quote?.workRequest || null
+  );
+  const [loading, setLoading] = useState(!quote);
   const [isAccepting, setIsAccepting] = useState(false);
 
-  const quote = location.state?.quote;
-  const workRequest = location.state?.workRequest;
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchQuote = async () => {
+      try {
+        setLoading(true);
+        const response = await getQuoteById(id);
+        const data = response?.data?.data || response?.data;
+        if (isMounted && data) {
+          setQuote(data);
+          if (data.workRequest) {
+            setWorkRequest(data.workRequest);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load quote details:", error);
+        toast.error(
+          error?.response?.data?.message ||
+            error?.message ||
+            "Failed to load quote details."
+        );
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    if (!quote && id) {
+      fetchQuote();
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, quote]);
+
+  const handleStartChat = async () => {
+    if (!quote?._id) return;
+    try {
+      const response = await createChat(quote._id);
+      const chatData = response?.data?.data || response?.data;
+      if (chatData?._id) {
+        navigate(`/chat/${chatData._id}`);
+      } else {
+        navigate("/chat");
+      }
+    } catch (err) {
+      console.error("Failed to start chat:", err);
+      toast.error(
+        err?.response?.data?.message || err?.message || "Failed to start chat"
+      );
+    }
+  };
+
+  const handleAcceptQuote = async () => {
+    if (!quote) return;
+    const professionalName =
+      quote.professional?.name ||
+      quote.professional?.fullName ||
+      "Professional";
+
+    const confirmed = window.confirm(
+      `Are you sure you want to accept ${professionalName}'s quote for ₹${Number(
+        quote.amount
+      ).toLocaleString("en-IN")}? This will confirm your booking.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setIsAccepting(true);
+      await acceptQuote(quote._id);
+
+      toast.success("Quote accepted! Proceeding to schedule your booking...");
+
+      navigate("/customer/bookings/create", {
+        state: {
+          quote: {
+            ...quote,
+            status: "accepted",
+          },
+          workRequest,
+        },
+      });
+    } catch (error) {
+      console.error("Failed to accept quote:", error);
+      toast.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to accept quote."
+      );
+    } finally {
+      setIsAccepting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50/70">
+        <CustomerNavbar />
+        <main className="max-w-4xl mx-auto px-4 py-20 text-center">
+          <div className="w-8 h-8 border-3 border-[#1a7a6e] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-sm text-gray-500">Loading quote details...</p>
+        </main>
+      </div>
+    );
+  }
 
   if (!quote || !workRequest) {
     return (
@@ -63,57 +177,31 @@ const QuoteDetails = () => {
 
   const revisions = [...(quote.revisions || [])].reverse();
 
-  const handleAcceptQuote = async () => {
-    const confirmed = window.confirm(
-      `Are you sure you want to accept ${professionalName}'s quote for ₹${Number(
-        quote.amount
-      ).toLocaleString("en-IN")}? This will confirm your booking.`
-    );
-
-    if (!confirmed) return;
-
-    try {
-      setIsAccepting(true);
-      await acceptQuote(quote._id);
-
-      toast.success("Quote accepted! Proceeding to schedule your booking...");
-
-      navigate("/customer/bookings/create", {
-        state: {
-          quote: {
-            ...quote,
-            status: "accepted",
-          },
-          workRequest,
-        },
-      });
-    } catch (error) {
-      console.error("Failed to accept quote:", error);
-      toast.error(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Failed to accept quote."
-      );
-    } finally {
-      setIsAccepting(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50/70 pb-16">
       <CustomerNavbar />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back navigation */}
-        <button
-          onClick={() =>
-            navigate(`/customer/work-requests/${workRequest._id}/quotes`)
-          }
-          className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-[#1a7a6e] mb-6 transition cursor-pointer group"
-        >
-          <HiArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-          <span>Back to Quotes</span>
-        </button>
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <button
+            onClick={() =>
+              navigate(`/customer/work-requests/${workRequest._id}/quotes`)
+            }
+            className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-[#1a7a6e] transition cursor-pointer group"
+          >
+            <HiArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            <span>Back to Quotes</span>
+          </button>
+
+          <button
+            onClick={handleStartChat}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-teal-200 bg-teal-50 text-[#1a7a6e] hover:bg-teal-100 font-semibold text-xs transition cursor-pointer shadow-xs"
+          >
+            <HiChatBubbleLeftEllipsis className="w-4 h-4" />
+            <span>Chat & Negotiate</span>
+          </button>
+        </div>
 
         {/* Header Hero */}
         <section className="bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-8 shadow-xs">
@@ -178,55 +266,23 @@ const QuoteDetails = () => {
               <span>
                 {workRequest.location.city ||
                   workRequest.location.address ||
-                  "Service location selected"}
+                  "Location provided"}
               </span>
             </div>
           )}
         </section>
 
-        {/* Quote Details & Summary */}
-        <section className="bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-7 mt-6 shadow-xs">
-          <h2 className="text-lg font-bold text-gray-900 mb-6">
-            Quote Details
-          </h2>
+        {/* Quote Details Summary */}
+        <QuoteSummary quote={quote} />
 
-          <QuoteSummary quote={quote} />
-
-          <div className="mt-6 pt-5 border-t border-gray-100">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-              Available Time
-            </p>
-
-            <p className="font-semibold text-gray-700 text-sm mt-1">
-              {quote.availableTime || "Not specified"}
-            </p>
-          </div>
-
-          {quote.message && (
-            <div className="mt-6 bg-teal-50/30 border border-teal-100/70 rounded-xl p-5">
-              <p className="text-xs font-bold text-[#1a7a6e] uppercase tracking-wider">
-                Professional's Message
-              </p>
-
-              <p className="text-gray-700 mt-2 text-sm leading-6 whitespace-pre-wrap">
-                {quote.message}
-              </p>
-            </div>
-          )}
-        </section>
-
-        {/* Revisions History */}
+        {/* Negotiation & Revisions History */}
         <section className="bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-7 mt-6 shadow-xs">
           <h2 className="text-lg font-bold text-gray-900">
-            Quote History
+            Negotiation History
           </h2>
 
-          <p className="text-xs text-gray-500 mt-1">
-            Previous versions of this quote.
-          </p>
-
           {revisions.length === 0 ? (
-            <div className="mt-5 bg-gray-50 rounded-xl p-4 text-sm text-gray-500 border border-gray-100">
+            <div className="mt-3 text-sm text-gray-500 bg-gray-50 rounded-xl p-4 border border-gray-100">
               No revisions yet. This is the original quote.
             </div>
           ) : (
@@ -249,7 +305,7 @@ const QuoteDetails = () => {
           </h2>
 
           <p className="text-sm text-gray-500 mt-1">
-            Review this offer and decide whether to accept it.
+            Review this offer, discuss via chat, and decide whether to accept it.
           </p>
 
           <div className="flex flex-wrap items-center gap-3 mt-5">
@@ -263,6 +319,15 @@ const QuoteDetails = () => {
               Back to Quotes
             </button>
 
+            <button
+              type="button"
+              onClick={handleStartChat}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-teal-200 bg-teal-50 hover:bg-teal-100 text-[#1a7a6e] font-semibold text-sm transition cursor-pointer shadow-xs"
+            >
+              <HiChatBubbleLeftEllipsis className="w-4 h-4" />
+              <span>Chat & Negotiate</span>
+            </button>
+
             {["submitted", "negotiating"].includes(quote.status) &&
               workRequest.status !== "BOOKED" && (
                 <button
@@ -272,7 +337,7 @@ const QuoteDetails = () => {
                   className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#1a7a6e] hover:bg-[#156359] text-white font-bold text-sm shadow-md shadow-teal-900/10 active:scale-[0.98] transition disabled:opacity-60 cursor-pointer"
                 >
                   <HiCheck className="w-4 h-4" />
-                  <span>{isAccepting ? "Accepting..." : "Accept Quote"}</span>
+                  <span>{isAccepting ? "Accepting..." : "Accept Quote & Book"}</span>
                 </button>
               )}
           </div>

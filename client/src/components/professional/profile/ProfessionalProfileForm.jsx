@@ -1,6 +1,6 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { HiCheck, HiOutlineUser, HiOutlinePhone, HiOutlineDocumentText, HiOutlineBriefcase } from "react-icons/hi2";
+import { HiCheck, HiOutlineUser, HiOutlinePhone, HiOutlineBriefcase } from "react-icons/hi2";
 import useAuth from "../../../hooks/useAuth";
 import { updateProfile } from "../../../services/auth.service";
 

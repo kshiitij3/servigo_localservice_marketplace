@@ -137,11 +137,15 @@ export const updateQuote = async (
     amount,
     message,
     estimatedDuration,
+    availableDate,
+    availableTime,
   } = quoteData;
 
   if (!Number.isFinite(Number(amount)) || Number(amount) < 1) {
     throw new ApiError(400, "Quote amount must be greater than 0");
   }
+
+  const previousAmount = quote.amount;
 
   // Save previous version
   quote.revisions.push({
@@ -159,9 +163,74 @@ export const updateQuote = async (
     quote.estimatedDuration = estimatedDuration;
   }
 
+  if (availableDate !== undefined) {
+    quote.availableDate = availableDate;
+  }
+
+  if (availableTime !== undefined) {
+    quote.availableTime = availableTime;
+  }
+
   quote.status = "negotiating";
 
   await quote.save();
+
+  // Try to record quote update in chat if an active conversation exists
+  try {
+    const Chat = (await import("../models/Chat.js")).default;
+    const { createMessage } = await import("./chat.service.js");
+    const chat = await Chat.findOne({
+      workRequest: quote.workRequest,
+      professional: quote.professional,
+    });
+    if (chat && chat.status === "active") {
+      await createMessage({
+        chatId: chat._id,
+        senderId: professionalId,
+        type: "quote_update",
+        content: message ? `Quote updated: ${message}` : `Quote updated to ₹${Number(amount).toLocaleString("en-IN")}`,
+        quoteUpdate: {
+          previousAmount,
+          newAmount: Number(amount),
+        },
+      });
+    }
+  } catch (chatError) {
+    console.error("Non-critical: could not log quote update to chat:", chatError.message);
+  }
+
+  return quote;
+};
+
+
+// Get Quote by ID
+export const getQuoteById = async (quoteId, userId) => {
+  const quote = await Quote.findById(quoteId)
+    .populate(
+      "workRequest",
+      "title description category location status customer"
+    )
+    .populate(
+      "professional",
+      "name email phone profileImage professionalProfile"
+    )
+    .populate("customer", "name email phone profileImage");
+
+  if (!quote) {
+    throw new ApiError(404, "Quote not found");
+  }
+
+  const isProfessional =
+    quote.professional?._id?.toString() === userId.toString();
+  const isCustomer =
+    quote.customer?._id?.toString() === userId.toString();
+
+  if (!isProfessional && !isCustomer) {
+    throw new ApiError(
+      403,
+      "You are not allowed to view this quote"
+    );
+  }
 
   return quote;
 };

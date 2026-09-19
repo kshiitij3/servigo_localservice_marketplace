@@ -86,6 +86,18 @@ const ProfessionalDashboard = () => {
   const availabilityStatus =
     user?.professionalProfile?.availabilityStatus || "available";
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50/70">
+        <ProfessionalNavbar />
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+          <div className="w-8 h-8 border-3 border-[#1a7a6e] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-sm text-gray-500">Loading your dashboard...</p>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50/70 pb-16">
       <ProfessionalNavbar />

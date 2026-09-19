@@ -1,12 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   HiChatBubbleBottomCenterText,
   HiMapPin,
-  HiCheckCircle,
-  HiClock,
-  HiXCircle,
   HiArrowPath,
 } from "react-icons/hi2";
 
@@ -18,13 +15,12 @@ const MyQuotes = () => {
   const navigate = useNavigate();
 
   const [quotes, setQuotes] = useState([]);
-  const [activeFilter, setActiveFilter] = useState("ALL");
   const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState("ALL");
 
-  const fetchQuotes = async () => {
+  const fetchQuotes = useCallback(async () => {
     try {
       setLoading(true);
-
       const response = await getMyQuotes();
       const raw =
         response?.data?.data ||
@@ -44,10 +40,42 @@ const MyQuotes = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchQuotes();
+    let mounted = true;
+    const load = async () => {
+      try {
+        setLoading(true);
+        const response = await getMyQuotes();
+        const raw =
+          response?.data?.data ||
+          response?.data?.quotes ||
+          response?.data ||
+          [];
+        if (mounted) {
+          setQuotes(Array.isArray(raw) ? raw : []);
+        }
+      } catch (error) {
+        console.error("Failed to load quotes:", error);
+        if (mounted) {
+          toast.error(
+            error?.response?.data?.message ||
+              error?.message ||
+              "Failed to load your quotes."
+          );
+          setQuotes([]);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+    load();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const countByStatus = (status) => {

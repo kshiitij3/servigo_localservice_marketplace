@@ -45,7 +45,31 @@ const MyBookings = () => {
   };
 
   useEffect(() => {
-    fetchBookings();
+    let mounted = true;
+
+    getMyBookings()
+      .then((response) => {
+        if (!mounted) return;
+        const list = response?.data?.data || response?.data || [];
+        setBookings(Array.isArray(list) ? list : []);
+      })
+      .catch((error) => {
+        if (!mounted) return;
+        console.error("Failed to fetch customer bookings:", error);
+        toast.error(
+          error?.response?.data?.message ||
+            error?.message ||
+            "Failed to load your bookings."
+        );
+        setBookings([]);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const filters = [

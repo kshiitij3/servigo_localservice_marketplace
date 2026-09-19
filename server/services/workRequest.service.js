@@ -2,8 +2,6 @@ import WorkRequest from "../models/WorkRequest.js";
 import Category from "../models/Category.js";
 import ApiError from "../utils/ApiError.js";
 
-
-
 const validateCategory = async (categoryId, customCategory) => {
   const category = await Category.findById(categoryId);
 
@@ -49,13 +47,10 @@ const generateQuoteDeadline = () => {
   return deadline;
 };
 
-
-
 export const createWorkRequest = async (
   customerId,
   workRequestData
 ) => {
-
   const {
     title,
     description,
@@ -84,68 +79,42 @@ export const createWorkRequest = async (
 
   // Create request
   const workRequest = await WorkRequest.create({
-
     customer: customerId,
-
     title,
-
     description,
-
     category,
-
     customCategory,
-
     media,
-
     location,
-
     budget,
-
     preferredDate,
-
     preferredTimeSlot,
-
     isUrgent,
-
     visibilityRadius,
-
     quoteDeadline,
-
   });
 
   return workRequest;
 };
 
-
 export const getMyWorkRequests = async (
   customerId
 ) => {
-
   return await WorkRequest.find({
-
     customer: customerId,
-
     isDeleted: false,
-
   })
     .populate("category", "name slug")
     .sort({ createdAt: -1 });
-
 };
-
-
 
 export const getWorkRequestById = async (
   workRequestId
 ) => {
-
   const workRequest =
     await WorkRequest.findOne({
-
       _id: workRequestId,
-
       isDeleted: false,
-
     })
       .populate(
         "customer",
@@ -161,61 +130,46 @@ export const getWorkRequestById = async (
       );
 
   if (!workRequest) {
-
     throw new ApiError(
       404,
       "Work request not found"
     );
-
   }
 
   return workRequest;
 };
-
-
 
 export const updateWorkRequest = async (
   workRequestId,
   customerId,
   updateData
 ) => {
-
   const workRequest =
     await WorkRequest.findOne({
-
       _id: workRequestId,
-
       customer: customerId,
-
       isDeleted: false,
-
     });
 
   if (!workRequest) {
-
     throw new ApiError(
       404,
       "Work request not found"
     );
-
   }
 
-  if (workRequest.status !== "OPEN") {
-
+  if (workRequest.status !== "OPEN" && workRequest.status !== "QUOTED") {
     throw new ApiError(
       400,
-      "Only open work requests can be updated."
+      "Only open or quoted work requests can be updated."
     );
-
   }
 
   if (updateData.category || updateData.customCategory !== undefined) {
-
     await validateCategory(
       updateData.category || workRequest.category,
       updateData.customCategory ?? workRequest.customCategory
     );
-
   }
 
   if (updateData.budget !== undefined) {
@@ -249,42 +203,32 @@ export const updateWorkRequest = async (
   return workRequest;
 };
 
-
 export const deleteWorkRequest = async (
   workRequestId,
   customerId
 ) => {
-
   const workRequest =
     await WorkRequest.findOne({
-
       _id: workRequestId,
-
       customer: customerId,
-
       isDeleted: false,
-
     });
 
   if (!workRequest) {
-
     throw new ApiError(
       404,
       "Work request not found"
     );
-
   }
 
   if (
     workRequest.status === "IN_PROGRESS" ||
     workRequest.status === "COMPLETED"
   ) {
-
     throw new ApiError(
       400,
       "This work request cannot be deleted."
     );
-
   }
 
   workRequest.isDeleted = true;
@@ -294,64 +238,53 @@ export const deleteWorkRequest = async (
   return true;
 };
 
-
-
 export const getNearbyWorkRequests = async (
   longitude,
   latitude,
   categoryIds = []
 ) => {
-
-  if (
-    !Number.isFinite(longitude) ||
-    !Number.isFinite(latitude) ||
-    longitude < -180 || longitude > 180 ||
-    latitude < -90 || latitude > 90
-  ) {
-    throw new ApiError(400, "Valid longitude and latitude are required");
-  }
-
   const query = {
-
-    status: "OPEN",
-
-    isDeleted: false,
-
-    location: {
-
-      $near: {
-
-        $geometry: {
-
-          type: "Point",
-
-          coordinates: [
-            longitude,
-            latitude,
-          ],
-
-        },
-
-        // 10 km
-        $maxDistance: 10000,
-
-      },
-
+    status: {
+      $in: ["OPEN", "QUOTED"],
     },
-
+    isDeleted: false,
   };
 
-  if (categoryIds.length) {
+  const hasCoordinates =
+    Number.isFinite(longitude) &&
+    Number.isFinite(latitude) &&
+    longitude >= -180 &&
+    longitude <= 180 &&
+    latitude >= -90 &&
+    latitude <= 90;
 
+  if (hasCoordinates) {
+    query.location = {
+      $near: {
+        $geometry: {
+          type: "Point",
+          coordinates: [longitude, latitude],
+        },
+        // 10 km
+        $maxDistance: 10000,
+      },
+    };
+  }
+
+  if (categoryIds.length) {
     query.category = {
       $in: categoryIds,
     };
-
   }
 
-  return await WorkRequest.find(query)
+  const findQuery = WorkRequest.find(query)
     .populate("category", "name slug")
-    .populate("customer", "name")
-    .sort({ createdAt: -1 });
+    .populate("customer", "name");
 
+  if (!hasCoordinates) {
+    findQuery.sort({ createdAt: -1 });
+  }
+
+  return await findQuery;
 };
+

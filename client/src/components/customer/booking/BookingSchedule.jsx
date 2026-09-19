@@ -8,9 +8,20 @@ import {
 } from "react-icons/hi2";
 
 const BookingSchedule = ({ quote, onSubmit, loading }) => {
-  const defaultDate = quote?.availableDate
-    ? quote.availableDate.split("T")[0]
-    : "";
+  const defaultDate = (() => {
+    if (!quote?.availableDate) return "";
+    try {
+      if (typeof quote.availableDate === "string") {
+        return quote.availableDate.includes("T")
+          ? quote.availableDate.split("T")[0]
+          : quote.availableDate;
+      }
+      const d = new Date(quote.availableDate);
+      return isNaN(d.getTime()) ? "" : d.toISOString().split("T")[0];
+    } catch {
+      return "";
+    }
+  })();
 
   const defaultStartTime = quote?.availableTime || "";
 
@@ -95,11 +106,20 @@ const BookingSchedule = ({ quote, onSubmit, loading }) => {
           <HiInformationCircle className="w-5 h-5 text-[#1a7a6e] shrink-0 mt-0.5" />
           <div className="text-xs text-teal-950 leading-relaxed">
             <span className="font-bold">Professional's Proposed Timing: </span>
-            {new Date(quote.availableDate).toLocaleDateString("en-IN", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })}{" "}
+            {(() => {
+              try {
+                const d = new Date(quote.availableDate);
+                return isNaN(d.getTime())
+                  ? String(quote.availableDate)
+                  : d.toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    });
+              } catch {
+                return String(quote.availableDate || "");
+              }
+            })()}{" "}
             at {quote.availableTime || "any preferred time"}. You may keep this or adjust it.
           </div>
         </div>

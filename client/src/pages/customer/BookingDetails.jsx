@@ -156,7 +156,13 @@ const BookingDetails = () => {
 
               <p className="text-gray-500 text-sm mt-1">
                 {booking.workRequest?.category ? (
-                  <span className="capitalize">{booking.workRequest.category} • </span>
+                  <span className="capitalize">
+                    {booking.workRequest.category?.name ||
+                      (typeof booking.workRequest.category === "string"
+                        ? booking.workRequest.category
+                        : booking.workRequest.customCategory || "Service")}{" "}
+                    •{" "}
+                  </span>
                 ) : null}
                 Managed through ServiGo Service Guarantee
               </p>

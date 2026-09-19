@@ -17,6 +17,7 @@ const QuoteCard = ({
   acceptingQuoteId,
   onAccept,
   onViewDetails,
+  onChat,
 }) => {
   const isAcceptable =
     ["submitted", "negotiating"].includes(quote.status) && !isJobBooked;
@@ -275,14 +276,27 @@ const QuoteCard = ({
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center justify-between gap-3 mt-6 pt-4 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={() => onViewDetails && onViewDetails(quote)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold text-sm hover:bg-gray-50 hover:border-gray-300 transition cursor-pointer shadow-xs"
-            >
-              <HiEye className="w-4 h-4 text-gray-500" />
-              <span>View Quote</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onViewDetails && onViewDetails(quote)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold text-sm hover:bg-gray-50 hover:border-gray-300 transition cursor-pointer shadow-xs"
+              >
+                <HiEye className="w-4 h-4 text-gray-500" />
+                <span>View Quote</span>
+              </button>
+
+              {onChat && (
+                <button
+                  type="button"
+                  onClick={() => onChat(quote)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-teal-200 bg-teal-50 text-[#1a7a6e] hover:bg-teal-100 font-semibold text-sm transition cursor-pointer shadow-xs"
+                >
+                  <HiChatBubbleLeftEllipsis className="w-4 h-4" />
+                  <span>Chat & Negotiate</span>
+                </button>
+              )}
+            </div>
 
             <div className="flex items-center gap-3">
               {isAcceptable && (

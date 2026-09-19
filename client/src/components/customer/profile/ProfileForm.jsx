@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import {
   HiUser,
@@ -14,6 +14,7 @@ import { updateProfile } from "../../../services/auth.service";
 const ProfileForm = ({ user }) => {
   const { updateUser } = useAuth();
 
+  const [prevUser, setPrevUser] = useState(user);
   const [formData, setFormData] = useState({
     name: user?.name || "",
     phone: user?.phone || "",
@@ -21,14 +22,13 @@ const ProfileForm = ({ user }) => {
 
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        name: user?.name || "",
-        phone: user?.phone || "",
-      });
-    }
-  }, [user]);
+  if (user !== prevUser) {
+    setPrevUser(user);
+    setFormData({
+      name: user?.name || "",
+      phone: user?.phone || "",
+    });
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;

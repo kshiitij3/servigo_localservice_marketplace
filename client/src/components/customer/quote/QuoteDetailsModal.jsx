@@ -2,6 +2,7 @@ import {
   HiXMark,
   HiCheckBadge,
   HiCheck,
+  HiChatBubbleLeftEllipsis,
 } from "react-icons/hi2";
 
 const QuoteDetailsModal = ({
@@ -11,6 +12,7 @@ const QuoteDetailsModal = ({
   acceptingQuoteId,
   onClose,
   onAccept,
+  onChat,
 }) => {
   if (!quote) return null;
 
@@ -206,7 +208,7 @@ const QuoteDetailsModal = ({
         )}
 
         {/* Modal Actions */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+        <div className="flex flex-wrap items-center justify-end gap-3 pt-4 border-t border-gray-100">
           <button
             type="button"
             onClick={onClose}
@@ -214,6 +216,20 @@ const QuoteDetailsModal = ({
           >
             Close
           </button>
+
+          {onChat && (
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onChat(quote);
+              }}
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-teal-200 bg-teal-50 text-[#1a7a6e] font-semibold text-sm hover:bg-teal-100 transition cursor-pointer"
+            >
+              <HiChatBubbleLeftEllipsis className="w-4 h-4" />
+              <span>Chat & Negotiate</span>
+            </button>
+          )}
 
           {isAcceptable && (
             <button

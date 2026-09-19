@@ -6,6 +6,7 @@ import {
   HiClipboardDocumentList,
   HiCalendarDays,
   HiBell,
+  HiChatBubbleLeftEllipsis,
   HiUser,
   HiArrowRightOnRectangle
 } from "react-icons/hi2";
@@ -15,6 +16,7 @@ const links = [
   { label: "Dashboard", path: "/customer/dashboard", icon: HiSquares2X2 },
   { label: "My Requests", path: "/customer/work-requests", icon: HiClipboardDocumentList },
   { label: "Bookings", path: "/customer/bookings", icon: HiCalendarDays },
+  { label: "Messages", path: "/chat", icon: HiChatBubbleLeftEllipsis },
   { label: "Notifications", path: "/customer/notifications", icon: HiBell },
   { label: "Profile", path: "/customer/profile", icon: HiUser },
 ];

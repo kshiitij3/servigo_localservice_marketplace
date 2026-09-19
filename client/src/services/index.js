@@ -8,3 +8,4 @@ export * from "./booking.service";
 export * from "./payment.service";
 export * from "./upload.service";
 export * from "./professional.service";
+export * from "./chat.service";

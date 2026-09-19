@@ -7,7 +7,17 @@ import {
   getQuotesForWorkRequest,
   getMyQuotes,
   acceptQuote,
+  getQuoteById,
 } from "../services/quote.service.js";
+
+// Get single quote by ID
+export const getById = asyncHandler(async (req, res) => {
+  const quote = await getQuoteById(req.params.id, req.user._id);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Quote fetched successfully", quote));
+});
 
 
 // Professional creates quote

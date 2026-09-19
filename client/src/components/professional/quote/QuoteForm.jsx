@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   HiBanknotes,
   HiChatBubbleBottomCenterText,
@@ -9,6 +9,8 @@ import {
 
 const QuoteForm = ({ onSubmit, loading, initialData, suggestedBudget }) => {
   const isRevision = Boolean(initialData?.amount || initialData?.initialAmount);
+
+  const [prevInitialData, setPrevInitialData] = useState(initialData);
 
   const [formData, setFormData] = useState({
     initialAmount:
@@ -36,7 +38,8 @@ const QuoteForm = ({ onSubmit, loading, initialData, suggestedBudget }) => {
 
   const [hasCustomAmount, setHasCustomAmount] = useState(Boolean(initialData?.amount));
 
-  useEffect(() => {
+  if (initialData !== prevInitialData) {
+    setPrevInitialData(initialData);
     if (initialData) {
       setFormData({
         initialAmount:
@@ -61,7 +64,7 @@ const QuoteForm = ({ onSubmit, loading, initialData, suggestedBudget }) => {
         setHasCustomAmount(true);
       }
     }
-  }, [initialData]);
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;

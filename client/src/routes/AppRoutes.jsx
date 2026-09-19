@@ -31,6 +31,9 @@ import Availability from "../pages/professional/Availability";
 import ServiceArea from "../pages/professional/ServiceArea";
 import ProfessionalProfile from "../pages/professional/ProfessionalProfile";
 import ProfessionalSettings from "../pages/professional/ProfessionalSettings";
+import Conversations from "../pages/chat/Conversations";
+import Chat from "../pages/chat/Chat";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 const AppRoutes = () => {
   return (
@@ -51,6 +54,9 @@ const AppRoutes = () => {
           path="/register"
           element={<Register />}
         />
+
+        <Route path="/chat" element={<ProtectedRoute><Conversations /></ProtectedRoute>} />
+        <Route path="/chat/:chatId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
 
         <Route
           path="/customer/dashboard"
