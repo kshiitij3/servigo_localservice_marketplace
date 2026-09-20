@@ -17,6 +17,7 @@ import QuoteDetails from "../pages/customer/QuoteDetails";
 import CreateBooking from "../pages/customer/CreateBooking";
 import CustomerMyBookings from "../pages/customer/MyBookings";
 import CustomerBookingDetails from "../pages/customer/BookingDetails";
+import ReviewBooking from "../pages/customer/ReviewBooking";
 import CustomerProfile from "../pages/customer/CustomerProfile";
 import ProfessionalDashboard from "../pages/professional/ProfessionalDashboard";
 import NearbyJobs from "../pages/professional/NearbyJobs";
@@ -101,6 +102,12 @@ const AppRoutes = () => {
         <Route
           path="/customer/bookings/:id"
           element={<CustomerBookingDetails />}
+        />
+
+        
+        <Route
+          path="/customer/bookings/:id/review"
+          element={<ReviewBooking />}
         />
 
         <Route

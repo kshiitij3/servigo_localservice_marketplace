@@ -17,6 +17,7 @@ import professionalRoutes from "./routes/professional.routes.js";
 import bookingRoutes from "./routes/booking.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
+import reviewRoutes from "./routes/review.routes.js";
 
 dotenv.config({
   path: fileURLToPath(new URL("./.env", import.meta.url)),
@@ -45,6 +46,7 @@ app.use("/api/v1/professionals", professionalRoutes);
 app.use("/api/v1/bookings", bookingRoutes);
 app.use("/api/v1/payments", paymentRoutes);
 app.use("/api/v1/chats", chatRoutes);
+app.use("/api/v1/reviews", reviewRoutes);
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 

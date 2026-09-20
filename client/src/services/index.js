@@ -9,3 +9,4 @@ export * from "./payment.service";
 export * from "./upload.service";
 export * from "./professional.service";
 export * from "./chat.service";
+export * from "./review.service";
