@@ -2,6 +2,7 @@ import Quote from "../models/Quote.js";
 import WorkRequest from "../models/WorkRequest.js";
 import User from "../models/User.js";
 import ApiError from "../utils/ApiError.js";
+import { createNotification } from "./notification.service.js";
 
 // Create Quote
 export const createQuote = async (
@@ -92,6 +93,24 @@ export const createQuote = async (
       },
     }
   );
+
+  /*
+   * Notify the customer that a new quote has arrived.
+   * Non-fatal: a notification failure must not roll back the quote.
+   */
+  try {
+    await createNotification({
+      receiver: request.customer,
+      sender: professionalId,
+      title: "New Quote Received",
+      message: `A professional submitted a quote of \u20b9${Number(initialAmount).toLocaleString("en-IN")} for your work request.`,
+      type: "new_quote",
+      relatedId: quote._id,
+      relatedModel: "Quote",
+    });
+  } catch (notifError) {
+    console.error("Non-critical: quote notification failed:", notifError.message);
+  }
 
   return quote;
 };
@@ -404,6 +423,24 @@ export const acceptQuote = async (
   workRequest.selectedQuote = quote._id;
 
   await workRequest.save();
+
+  /*
+   * Notify the professional that their quote was accepted.
+   * Non-fatal: a notification failure must not roll back the acceptance.
+   */
+  try {
+    await createNotification({
+      receiver: quote.professional,
+      sender: customerId,
+      title: "Quote Accepted",
+      message: `Your quote of \u20b9${Number(quote.amount).toLocaleString("en-IN")} has been accepted by the customer.`,
+      type: "quote_accepted",
+      relatedId: quote._id,
+      relatedModel: "Quote",
+    });
+  } catch (notifError) {
+    console.error("Non-critical: quote accepted notification failed:", notifError.message);
+  }
 
   return quote;
 };

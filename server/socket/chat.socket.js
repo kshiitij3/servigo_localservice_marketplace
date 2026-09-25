@@ -4,6 +4,7 @@ import {
   markChatAsRead,
   negotiateQuote,
 } from "../services/chat.service.js";
+import { createNotification } from "../services/notification.service.js";
 
 const getChatRoom = (chatId) => {
   return `chat:${chatId}`;
@@ -18,11 +19,20 @@ const isChatParticipant = (chat, userId) => {
 
 export const registerChatSocket = (io) => {
   io.on("connection", (socket) => {
+    /*
+     * Join a personal room so notification:new events
+     * can be delivered to only this user.
+     *   notification.service.js  →  io.to(`user:${receiver}`)
+     */
+    const userRoom = `user:${socket.user._id}`;
+    socket.join(userRoom);
+
     console.log(
       "Socket connected:",
       socket.id,
       "User:",
-      socket.user._id.toString()
+      socket.user._id.toString(),
+      `| joined ${userRoom}`
     );
 
     /*
@@ -137,6 +147,28 @@ export const registerChatSocket = (io) => {
           content,
           media,
           quoteUpdate,
+        });
+
+        /* ── Chat Notification ── */
+        const senderId       = socket.user._id.toString();
+        const customerId     = chat.customer.toString();
+        const receiverId     = senderId === customerId ? chat.professional : chat.customer;
+
+        const messagePreview =
+          type === "image"
+            ? "Sent you an image."
+            : content?.trim()
+              ? content.trim().slice(0, 100)
+              : "Sent you a message.";
+
+        await createNotification({
+          receiver:     receiverId,
+          sender:       socket.user._id,
+          title:        `New message from ${socket.user.name}`,
+          message:      messagePreview,
+          type:         "chat",
+          relatedId:    chat._id,
+          relatedModel: "Chat",
         });
 
         io.to(getChatRoom(chatId)).emit("message:new", message);

@@ -34,6 +34,7 @@ import ProfessionalProfile from "../pages/professional/ProfessionalProfile";
 import ProfessionalSettings from "../pages/professional/ProfessionalSettings";
 import Conversations from "../pages/chat/Conversations";
 import Chat from "../pages/chat/Chat";
+import Notifications from "../pages/notifications/Notifications";
 import ProtectedRoute from "../components/ProtectedRoute";
 
 const AppRoutes = () => {
@@ -58,6 +59,7 @@ const AppRoutes = () => {
 
         <Route path="/chat" element={<ProtectedRoute><Conversations /></ProtectedRoute>} />
         <Route path="/chat/:chatId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+        <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
 
         <Route
           path="/customer/dashboard"

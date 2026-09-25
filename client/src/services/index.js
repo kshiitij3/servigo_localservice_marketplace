@@ -10,3 +10,4 @@ export * from "./upload.service";
 export * from "./professional.service";
 export * from "./chat.service";
 export * from "./review.service";
+export * from "./notification.service";

@@ -14,6 +14,7 @@ import {
   HiChevronDown,
 } from "react-icons/hi2";
 import useAuth from "../../hooks/useAuth";
+import NotificationBell from "../notifications/NotificationBell";
 
 // Core primary navigation tabs
 const primaryLinks = [
@@ -151,6 +152,10 @@ const ProfessionalNavbar = () => {
               <span className={`w-2 h-2 rounded-full ${statusInfo.dot} animate-pulse`} />
               <span>{statusInfo.label}</span>
             </button>
+
+            <div className="h-5 w-px bg-gray-200 mx-1" />
+
+            <NotificationBell />
 
             <div className="h-5 w-px bg-gray-200 mx-1" />
 
