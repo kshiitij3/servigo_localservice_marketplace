@@ -101,7 +101,10 @@ const BookingSummary = ({ booking, quote, workRequest }) => {
           </p>
           {effectiveWorkRequest?.category && (
             <span className="inline-block text-[11px] font-medium px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 mt-1 capitalize">
-              {effectiveWorkRequest.category}
+              {effectiveWorkRequest.category?.name ||
+                (typeof effectiveWorkRequest.category === "string"
+                  ? effectiveWorkRequest.category
+                  : effectiveWorkRequest.customCategory || "Service")}
             </span>
           )}
         </div>

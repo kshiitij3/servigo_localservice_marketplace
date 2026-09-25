@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { HiCheckCircle } from "react-icons/hi2";
 
 const availabilityOptions = [
@@ -36,11 +36,13 @@ const AvailabilitySelector = ({
   onChange,
   loading = false,
 }) => {
+  const [prevStatus, setPrevStatus] = useState(currentStatus);
   const [selectedStatus, setSelectedStatus] = useState(currentStatus);
 
-  useEffect(() => {
+  if (currentStatus !== prevStatus) {
+    setPrevStatus(currentStatus);
     setSelectedStatus(currentStatus);
-  }, [currentStatus]);
+  }
 
   const handleSelect = async (status) => {
     if (status === selectedStatus || loading) {
@@ -52,7 +54,7 @@ const AvailabilitySelector = ({
 
     try {
       await onChange(status);
-    } catch (error) {
+    } catch {
       setSelectedStatus(previousStatus);
     }
   };

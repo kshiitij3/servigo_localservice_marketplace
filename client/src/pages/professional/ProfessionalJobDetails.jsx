@@ -9,10 +9,10 @@ import {
   HiSparkles,
   HiExclamationCircle,
   HiBriefcase,
-  HiClock,
 } from "react-icons/hi2";
 
 import { getWorkRequestById } from "../../services/workRequest.service";
+import { getMyQuotes } from "../../services/quote.service";
 import ProfessionalNavbar from "../../components/professional/ProfessionalNavbar";
 import JobSummary from "../../components/professional/jobs/JobSummary";
 import JobMedia from "../../components/professional/jobs/JobMedia";
@@ -23,6 +23,7 @@ const ProfessionalJobDetails = () => {
   const navigate = useNavigate();
 
   const [job, setJob] = useState(null);
+  const [existingQuote, setExistingQuote] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,11 +32,33 @@ const ProfessionalJobDetails = () => {
     const fetchJob = async () => {
       try {
         setLoading(true);
-        const response = await getWorkRequestById(id);
-        const data = response?.data?.data || response?.data || null;
+        const [jobRes, quotesRes] = await Promise.allSettled([
+          getWorkRequestById(id),
+          getMyQuotes(),
+        ]);
 
-        if (isMounted) {
-          setJob(data);
+        if (jobRes.status === "fulfilled") {
+          const data = jobRes.value?.data?.data || jobRes.value?.data || null;
+          if (isMounted) setJob(data);
+        } else {
+          throw jobRes.reason;
+        }
+
+        if (quotesRes.status === "fulfilled") {
+          const raw =
+            quotesRes.value?.data?.data ||
+            quotesRes.value?.data?.quotes ||
+            quotesRes.value?.data ||
+            [];
+          const list = Array.isArray(raw) ? raw : [];
+          const myQ = list.find(
+            (q) =>
+              (q.workRequest?._id || q.workRequest)?.toString() ===
+              id.toString()
+          );
+          if (isMounted && myQ) {
+            setExistingQuote(myQ);
+          }
         }
       } catch (error) {
         console.error("Failed to load job details:", error);
@@ -109,7 +132,12 @@ const ProfessionalJobDetails = () => {
   const longitude = hasLocation ? coordinates[0] : null;
   const latitude = hasLocation ? coordinates[1] : null;
 
-  const isAcceptingQuotes = job.status === "OPEN";
+  const isAcceptingQuotes =
+    ["OPEN", "QUOTED"].includes(job.status) &&
+    job.status !== "BOOKED" &&
+    job.status !== "IN_PROGRESS" &&
+    job.status !== "COMPLETED" &&
+    !job.status?.startsWith("CANCELLED");
 
   return (
     <div className="min-h-screen bg-gray-50/70 pb-16">
@@ -144,12 +172,16 @@ const ProfessionalJobDetails = () => {
 
                 <span
                   className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
-                    job.status === "OPEN"
+                    isAcceptingQuotes
                       ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                       : "bg-gray-100 text-gray-700"
                   }`}
                 >
-                  {job.status}
+                  {job.status === "QUOTED"
+                    ? `Accepting Proposals (${job.quoteCount || 1} received)`
+                    : job.status === "OPEN"
+                    ? "Accepting Proposals"
+                    : job.status}
                 </span>
               </div>
 
@@ -159,15 +191,31 @@ const ProfessionalJobDetails = () => {
 
               <p className="text-xs text-gray-400 mt-1">
                 Posted on{" "}
-                {new Date(job.createdAt || Date.now()).toLocaleDateString("en-IN", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
+                {job.createdAt
+                  ? new Date(job.createdAt).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })
+                  : "Recently"}
               </p>
             </div>
 
-            {isAcceptingQuotes && (
+            {existingQuote ? (
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(`/professional/quotes/${existingQuote._id}`)
+                }
+                className="self-start lg:self-center inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-teal-50 border border-teal-200 text-[#1a7a6e] hover:bg-teal-100 font-bold text-sm shadow-xs transition cursor-pointer shrink-0"
+              >
+                <HiChatBubbleBottomCenterText className="w-4 h-4" />
+                <span>
+                  View Your Quote (₹
+                  {Number(existingQuote.amount).toLocaleString("en-IN")})
+                </span>
+              </button>
+            ) : isAcceptingQuotes ? (
               <button
                 type="button"
                 onClick={() => navigate(`/professional/jobs/${job._id}/quote`)}
@@ -176,67 +224,77 @@ const ProfessionalJobDetails = () => {
                 <HiChatBubbleBottomCenterText className="w-4 h-4" />
                 <span>Send Quote</span>
               </button>
-            )}
+            ) : null}
           </div>
         </section>
 
-        {/* Content Layout Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6 items-start">
+        {/* Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
           {/* Main Column */}
           <div className="lg:col-span-2 space-y-6">
             {/* Description */}
-            <section className="bg-white border border-gray-200/80 rounded-2xl p-6 shadow-xs">
-              <h2 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3 flex items-center gap-2">
+            <section className="bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-7 shadow-xs">
+              <div className="flex items-center gap-2 mb-3">
                 <HiBriefcase className="w-5 h-5 text-[#1a7a6e]" />
-                <span>Service Description</span>
-              </h2>
-
-              <p className="text-gray-700 mt-4 leading-relaxed whitespace-pre-wrap text-sm sm:text-base">
+                <h2 className="text-lg font-bold text-gray-900">
+                  Service Description
+                </h2>
+              </div>
+              <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
                 {job.description}
               </p>
             </section>
 
-            {/* Photos & Videos */}
-            <JobMedia media={job.media} />
+            {/* Media/Images */}
+            {job.media && job.media.length > 0 && (
+              <JobMedia media={job.media} />
+            )}
 
-            {/* Location Map & Address Details */}
-            <section className="bg-white border border-gray-200/80 rounded-2xl p-6 shadow-xs">
-              <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
-                <div>
-                  <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                    <HiMapPin className="w-5 h-5 text-[#1a7a6e]" />
-                    <span>Service Location</span>
+            {/* Location & Map Section */}
+            <section className="bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-7 shadow-xs">
+              <div className="flex items-center justify-between gap-2 mb-4">
+                <div className="flex items-center gap-2">
+                  <HiMapPin className="w-5 h-5 text-[#1a7a6e]" />
+                  <h2 className="text-lg font-bold text-gray-900">
+                    Service Location
                   </h2>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    Customer's designated work site
-                  </p>
                 </div>
 
-                {job.visibilityRadius && (
-                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-teal-50 text-[#1a7a6e] border border-teal-200/60">
-                    {job.visibilityRadius} km visibility
+                {job.location?.city && (
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-teal-50 text-[#1a7a6e]">
+                    {job.location.city}
                   </span>
                 )}
               </div>
 
-              {hasLocation && latitude && longitude ? (
-                <div className="rounded-xl overflow-hidden border border-gray-200/80">
-                  <LocationMap latitude={latitude} longitude={longitude} />
+              {hasLocation ? (
+                <div className="rounded-xl overflow-hidden border border-gray-200">
+                  <LocationMap
+                    longitude={longitude}
+                    latitude={latitude}
+                    title={job.title}
+                    address={
+                      job.location.address ||
+                      [job.location.city, job.location.state]
+                        .filter(Boolean)
+                        .join(", ")
+                    }
+                  />
                 </div>
               ) : (
-                <div className="h-[240px] bg-gray-50 border border-gray-200/80 rounded-xl flex items-center justify-center text-gray-400 text-sm">
-                  GPS location not pinned for this request
+                <div className="bg-gray-50 rounded-xl p-6 text-center text-sm text-gray-500">
+                  Map coordinates not provided for this job.
                 </div>
               )}
 
-              <div className="mt-4 p-4 bg-gray-50/70 border border-gray-100 rounded-xl space-y-1 text-sm text-gray-700">
-                <p className="font-semibold text-gray-900">
-                  📍 {job.location?.address || "Address available upon booking"}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {[job.location?.city, job.location?.state]
-                    .filter(Boolean)
-                    .join(", ") || "City not specified"}
+              <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-600">
+                <p className="font-semibold text-gray-800">Exact Address:</p>
+                <p className="mt-0.5">
+                  {job.location?.address ||
+                    [job.location?.city, job.location?.state]
+                      .filter(Boolean)
+                      .join(", ") ||
+                    "City not specified"}
                   {job.location?.pincode ? ` - ${job.location.pincode}` : ""}
                 </p>
               </div>
@@ -262,10 +320,36 @@ const ProfessionalJobDetails = () => {
                 Provide your estimated service fee, availability time window, and expected completion duration.
               </p>
 
-              {isAcceptingQuotes ? (
+              {existingQuote ? (
+                <div className="mt-5 space-y-3">
+                  <div className="p-3 bg-teal-50 border border-teal-100 rounded-xl text-xs text-teal-800">
+                    <p className="font-semibold text-[#1a7a6e]">
+                      You have submitted a quote
+                    </p>
+                    <p className="mt-1">
+                      Active offer:{" "}
+                      <span className="font-bold">
+                        ₹{Number(existingQuote.amount).toLocaleString("en-IN")}
+                      </span>{" "}
+                      ({existingQuote.status})
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate(`/professional/quotes/${existingQuote._id}`)
+                    }
+                    className="w-full inline-flex items-center justify-center gap-2 bg-[#1a7a6e] hover:bg-[#155f55] text-white py-3 rounded-xl font-bold text-sm shadow-md transition cursor-pointer"
+                  >
+                    <span>View / Revise Quote</span>
+                  </button>
+                </div>
+              ) : isAcceptingQuotes ? (
                 <button
                   type="button"
-                  onClick={() => navigate(`/professional/jobs/${job._id}/quote`)}
+                  onClick={() =>
+                    navigate(`/professional/jobs/${job._id}/quote`)
+                  }
                   className="w-full mt-5 inline-flex items-center justify-center gap-2 bg-[#1a7a6e] hover:bg-[#155f55] text-white py-3 rounded-xl font-bold text-sm shadow-md shadow-teal-900/10 active:scale-[0.98] transition cursor-pointer"
                 >
                   <HiChatBubbleBottomCenterText className="w-4 h-4" />

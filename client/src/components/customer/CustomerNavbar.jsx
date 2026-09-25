@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaBars, FaXmark } from "react-icons/fa6";
+import NotificationBell from "../notifications/NotificationBell";
 import {
   HiSquares2X2,
   HiClipboardDocumentList,
   HiCalendarDays,
   HiBell,
+  HiChatBubbleLeftEllipsis,
   HiUser,
   HiArrowRightOnRectangle
 } from "react-icons/hi2";
@@ -15,7 +17,7 @@ const links = [
   { label: "Dashboard", path: "/customer/dashboard", icon: HiSquares2X2 },
   { label: "My Requests", path: "/customer/work-requests", icon: HiClipboardDocumentList },
   { label: "Bookings", path: "/customer/bookings", icon: HiCalendarDays },
-  { label: "Notifications", path: "/customer/notifications", icon: HiBell },
+  { label: "Messages", path: "/chat", icon: HiChatBubbleLeftEllipsis },
   { label: "Profile", path: "/customer/profile", icon: HiUser },
 ];
 
@@ -89,6 +91,10 @@ const CustomerNavbar = () => {
 
             <div className="h-5 w-px bg-gray-200 mx-2" />
 
+            <NotificationBell />
+
+            <div className="h-5 w-px bg-gray-200 mx-1" />
+
             <button
               type="button"
               onClick={handleLogout}
@@ -99,16 +105,19 @@ const CustomerNavbar = () => {
             </button>
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            type="button"
-            aria-label="Toggle menu"
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((open) => !open)}
-            className="rounded-xl p-2 text-gray-700 hover:bg-gray-100 md:hidden cursor-pointer"
-          >
-            {menuOpen ? <FaXmark size={20} /> : <FaBars size={20} />}
-          </button>
+          {/* Mobile: Bell + Menu Button */}
+          <div className="flex items-center gap-2 md:hidden">
+            <NotificationBell />
+            <button
+              type="button"
+              aria-label="Toggle menu"
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((open) => !open)}
+              className="rounded-xl p-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
+            >
+              {menuOpen ? <FaXmark size={20} /> : <FaBars size={20} />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Dropdown */}

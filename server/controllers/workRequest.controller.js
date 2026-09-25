@@ -98,12 +98,26 @@ export const getNearby = asyncHandler(async (req, res) => {
     ? categories.split(",").filter(Boolean)
     : [];
 
-  const workRequests =
-    await getNearbyWorkRequests(
-      Number(longitude),
-      Number(latitude),
-      categoryIds
-    );
+  const userCoords = req.user?.location?.coordinates;
+  const lon =
+    longitude !== undefined && longitude !== null && longitude !== ""
+      ? Number(longitude)
+      : Array.isArray(userCoords) && userCoords.length === 2
+      ? Number(userCoords[0])
+      : null;
+
+  const lat =
+    latitude !== undefined && latitude !== null && latitude !== ""
+      ? Number(latitude)
+      : Array.isArray(userCoords) && userCoords.length === 2
+      ? Number(userCoords[1])
+      : null;
+
+  const workRequests = await getNearbyWorkRequests(
+    lon,
+    lat,
+    categoryIds
+  );
 
   return res.status(200).json(
     new ApiResponse(

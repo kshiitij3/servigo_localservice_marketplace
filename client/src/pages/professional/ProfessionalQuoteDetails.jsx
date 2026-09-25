@@ -3,7 +3,6 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   HiArrowLeft,
-  HiBriefcase,
   HiMapPin,
   HiBanknotes,
   HiClock,
@@ -17,6 +16,7 @@ import {
 } from "react-icons/hi2";
 
 import { getQuoteById } from "../../services/quote.service";
+import { createChat } from "../../services/chat.service";
 import ProfessionalNavbar from "../../components/professional/ProfessionalNavbar";
 import QuoteStatus from "../../components/professional/quote/QuoteStatus";
 import QuoteRevision from "../../components/professional/quote/QuoteRevision";
@@ -140,6 +140,24 @@ const ProfessionalQuoteDetails = () => {
     workRequest?.customer?.name ||
     "Customer";
 
+  const handleStartChat = async () => {
+    if (!quote?._id) return;
+    try {
+      const response = await createChat(quote._id);
+      const chatData = response?.data?.data || response?.data;
+      if (chatData?._id) {
+        navigate(`/chat/${chatData._id}`);
+      } else {
+        navigate("/chat");
+      }
+    } catch (err) {
+      console.error("Failed to start chat:", err);
+      toast.error(
+        err?.response?.data?.message || err?.message || "Failed to start conversation"
+      );
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50/70 pb-16">
       <ProfessionalNavbar />
@@ -155,22 +173,33 @@ const ProfessionalQuoteDetails = () => {
             <span>Back to My Quotes</span>
           </button>
 
-          {isEditable && (
+          <div className="flex items-center gap-2.5">
             <button
-              onClick={() =>
-                navigate(`/professional/quotes/${quote._id}/edit`, {
-                  state: {
-                    quote,
-                    workRequest,
-                  },
-                })
-              }
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1a7a6e] hover:bg-[#155f55] text-white font-bold text-xs shadow-xs active:scale-[0.98] transition cursor-pointer"
+              type="button"
+              onClick={handleStartChat}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-teal-200 bg-teal-50 text-[#1a7a6e] hover:bg-teal-100 font-semibold text-xs transition shadow-xs cursor-pointer"
             >
-              <HiPencilSquare className="w-4 h-4" />
-              <span>Edit / Revise Quote</span>
+              <HiChatBubbleBottomCenterText className="w-4 h-4" />
+              <span>Chat with Customer</span>
             </button>
-          )}
+
+            {isEditable && (
+              <button
+                onClick={() =>
+                  navigate(`/professional/quotes/${quote._id}/edit`, {
+                    state: {
+                      quote,
+                      workRequest,
+                    },
+                  })
+                }
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1a7a6e] hover:bg-[#155f55] text-white font-bold text-xs shadow-xs active:scale-[0.98] transition cursor-pointer"
+              >
+                <HiPencilSquare className="w-4 h-4" />
+                <span>Edit / Revise Quote</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Header Hero Banner */}

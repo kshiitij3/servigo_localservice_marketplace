@@ -8,6 +8,7 @@ import {
   getForWorkRequest,
   getMine,
   accept,
+  getById,
 } from "../controllers/quote.controller.js";
 
 import {
@@ -63,6 +64,15 @@ router.put(
   updateQuoteValidation,
   validate,
   update
+);
+
+// Get single quote by ID (for customer and professional)
+router.get(
+  "/:id",
+  protect,
+  quoteIdValidation,
+  validate,
+  getById
 );
 
 export default router;

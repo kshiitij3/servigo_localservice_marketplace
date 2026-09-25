@@ -7,6 +7,7 @@ import {
   HiExclamationCircle,
   HiCreditCard,
   HiDocumentText,
+  HiStar,
 } from "react-icons/hi2";
 
 import { getBookingById } from "../../services/booking.service";
@@ -123,6 +124,13 @@ const BookingDetails = () => {
     booking.status === "payment_pending" ||
     (booking.paymentStatus === "pending" && Boolean(booking.workCompletedAt));
 
+  /**
+   * Show the review CTA when the booking is closed or payment is confirmed.
+   * The backend enforces eligibility — this is just a UI hint.
+   */
+  const canReview =
+    booking.status === "closed" || booking.paymentStatus === "paid";
+
   return (
     <div className="min-h-screen bg-gray-50/70 pb-16">
       <CustomerNavbar />
@@ -156,7 +164,13 @@ const BookingDetails = () => {
 
               <p className="text-gray-500 text-sm mt-1">
                 {booking.workRequest?.category ? (
-                  <span className="capitalize">{booking.workRequest.category} • </span>
+                  <span className="capitalize">
+                    {booking.workRequest.category?.name ||
+                      (typeof booking.workRequest.category === "string"
+                        ? booking.workRequest.category
+                        : booking.workRequest.customCategory || "Service")}{" "}
+                    •{" "}
+                  </span>
                 ) : null}
                 Managed through ServiGo Service Guarantee
               </p>
@@ -183,7 +197,7 @@ const BookingDetails = () => {
             <BookingSummary booking={booking} />
           </div>
 
-          {/* Right Column: Timeline, Location, Description, Payment */}
+          {/* Right Column: Timeline, Location, Description, Payment, Review */}
           <div className="lg:col-span-2 space-y-6">
             {/* Live Progress Timeline */}
             <BookingTimeline booking={booking} />
@@ -287,6 +301,42 @@ const BookingDetails = () => {
                 )}
               </div>
             </section>
+
+            {/* Leave a Review CTA */}
+            {canReview && (
+              <section className="bg-white border border-gray-200/80 rounded-2xl p-6 shadow-xs">
+                <div className="flex items-center gap-2 border-b border-gray-100 pb-4 mb-5">
+                  <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center shrink-0">
+                    <HiStar className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-gray-900">
+                      Share your experience
+                    </h2>
+                    <p className="text-xs text-gray-500">
+                      Let others know how the service went
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-sm text-gray-600 mb-4">
+                  Your feedback helps other customers choose the right professional
+                  and motivates great service.
+                </p>
+
+                <button
+                  id="btn-leave-review"
+                  type="button"
+                  onClick={() =>
+                    navigate(`/customer/bookings/${booking._id}/review`)
+                  }
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1a7a6e] hover:bg-[#155f55] text-white font-semibold text-sm transition shadow-xs cursor-pointer"
+                >
+                  <HiStar className="w-4 h-4" />
+                  Leave a Review
+                </button>
+              </section>
+            )}
           </div>
         </div>
       </main>

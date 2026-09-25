@@ -3,6 +3,7 @@ import Quote from "../models/Quote.js";
 import WorkRequest from "../models/WorkRequest.js";
 import User from "../models/User.js";
 import ApiError from "../utils/ApiError.js";
+import { createNotification } from "./notification.service.js";
 
 
 const timeToMinutes = (time) => {
@@ -236,6 +237,29 @@ export const createBooking = async (
     }
   );
 
+  /* ── Notify professional that a booking has been confirmed ── */
+  try {
+    const scheduledOn = booking.scheduledDate
+      ? new Date(booking.scheduledDate).toLocaleDateString("en-IN", {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+        })
+      : "a scheduled date";
+
+    await createNotification({
+      receiver:     booking.professional,
+      sender:       booking.customer,
+      title:        "Booking Confirmed",
+      message:      `A customer has confirmed a booking for ${scheduledOn}.`,
+      type:         "booking_confirmed",
+      relatedId:    booking._id,
+      relatedModel: "Booking",
+    });
+  } catch (err) {
+    console.error("Booking confirmed notification failed:", err.message);
+  }
+
 
   return booking;
 };
@@ -406,6 +430,52 @@ export const updateBookingStatus = async (
     { path: "customer", select: "name email phone avatar" },
     { path: "professional", select: "name email phone avatar" },
   ]);
+
+  /* ── Notify customer of status change ── */
+  const STATUS_NOTIFICATION = {
+    scheduled: {
+      title:   "Booking Scheduled",
+      message: "Your booking has been confirmed and scheduled by the professional.",
+      type:    "booking_confirmed",
+    },
+    on_the_way: {
+      title:   "Professional On the Way",
+      message: `${booking.professional?.name || "The professional"} is on the way to your location.`,
+      type:    "work_started",
+    },
+    arrived: {
+      title:   "Professional Has Arrived",
+      message: `${booking.professional?.name || "The professional"} has arrived at your location.`,
+      type:    "work_started",
+    },
+    work_started: {
+      title:   "Work Started",
+      message: `${booking.professional?.name || "The professional"} has started working on your service.`,
+      type:    "work_started",
+    },
+    payment_pending: {
+      title:   "Work Completed — Payment Due",
+      message: "The professional has completed the work. Please proceed with payment.",
+      type:    "work_completed",
+    },
+  };
+
+  const notifConfig = STATUS_NOTIFICATION[booking.status];
+  if (notifConfig) {
+    try {
+      await createNotification({
+        receiver:     booking.customer,
+        sender:       booking.professional,
+        title:        notifConfig.title,
+        message:      notifConfig.message,
+        type:         notifConfig.type,
+        relatedId:    booking._id,
+        relatedModel: "Booking",
+      });
+    } catch (err) {
+      console.error("Status notification failed:", err.message);
+    }
+  }
 
   return booking;
 };

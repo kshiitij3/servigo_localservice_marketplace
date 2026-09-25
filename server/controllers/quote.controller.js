@@ -7,8 +7,18 @@ import {
   getQuotesForWorkRequest,
   getMyQuotes,
   acceptQuote,
+  getQuoteById,
 } from "../services/quote.service.js";
+import { notifyQuoteAccepted } from "../services/chat.service.js";
 
+// Get single quote by ID
+export const getById = asyncHandler(async (req, res) => {
+  const quote = await getQuoteById(req.params.id, req.user._id);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Quote fetched successfully", quote));
+});
 
 // Professional creates quote
 export const create = asyncHandler(
@@ -27,7 +37,6 @@ export const create = asyncHandler(
     );
   }
 );
-
 
 // Professional updates / negotiates quote
 export const update = asyncHandler(
@@ -48,7 +57,6 @@ export const update = asyncHandler(
   }
 );
 
-
 // Customer gets quotes for a work request
 export const getForWorkRequest = asyncHandler(
   async (req, res) => {
@@ -68,7 +76,6 @@ export const getForWorkRequest = asyncHandler(
   }
 );
 
-
 // Professional gets own quotes
 export const getMine = asyncHandler(
   async (req, res) => {
@@ -87,11 +94,22 @@ export const getMine = asyncHandler(
 
 export const accept = asyncHandler(
   async (req, res) => {
-
     const quote = await acceptQuote(
       req.params.id,
       req.user._id
     );
+
+    /*
+     * Notify the active chat, if one exists.
+     */
+    try {
+      await notifyQuoteAccepted({
+        quote,
+        customerId: req.user._id,
+      });
+    } catch (notifyErr) {
+      console.error("Failed to notify chat of accepted quote:", notifyErr);
+    }
 
     return res.status(200).json(
       new ApiResponse(

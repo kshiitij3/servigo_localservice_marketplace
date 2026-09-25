@@ -1,17 +1,15 @@
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import {
   HiArrowLeft,
   HiBriefcase,
   HiMapPin,
-  HiBanknotes,
   HiExclamationCircle,
-  HiClock,
   HiArrowPath,
 } from "react-icons/hi2";
 
-import { updateQuote } from "../../services/quote.service";
+import { getQuoteById, updateQuote } from "../../services/quote.service";
 import ProfessionalNavbar from "../../components/professional/ProfessionalNavbar";
 import QuoteForm from "../../components/professional/quote/QuoteForm";
 import QuoteRevision from "../../components/professional/quote/QuoteRevision";
@@ -22,10 +20,95 @@ const EditQuote = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const quote = location.state?.quote;
-  const workRequest = location.state?.workRequest || quote?.workRequest;
+  const [quote, setQuote] = useState(location.state?.quote || null);
+  const [workRequest, setWorkRequest] = useState(
+    location.state?.workRequest || location.state?.quote?.workRequest || null
+  );
 
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(!quote);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchQuote = async () => {
+      try {
+        setFetching(true);
+        const response = await getQuoteById(id);
+        const data = response?.data?.data || response?.data;
+        if (mounted && data) {
+          setQuote(data);
+          if (data.workRequest) {
+            setWorkRequest(data.workRequest);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load quote:", err);
+        if (mounted) {
+          toast.error(
+            err?.response?.data?.message ||
+              err?.message ||
+              "Failed to load quote details"
+          );
+        }
+      } finally {
+        if (mounted) {
+          setFetching(false);
+        }
+      }
+    };
+
+    if (!quote && id) {
+      fetchQuote();
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [id, quote]);
+
+  const handleSubmit = async (data) => {
+    try {
+      setLoading(true);
+
+      const payload = {
+        amount: Number(data.amount),
+        message: data.message ? data.message.trim() : undefined,
+        estimatedDuration: {
+          value: Number(data.durationValue),
+          unit: data.durationUnit,
+        },
+        availableDate: data.availableDate || undefined,
+        availableTime: data.availableTime || undefined,
+      };
+
+      await updateQuote(id, payload);
+
+      toast.success("Quote updated & revised successfully!");
+      navigate("/professional/quotes");
+    } catch (error) {
+      console.error("Failed to update quote:", error);
+      toast.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to update quote."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (fetching) {
+    return (
+      <div className="min-h-screen bg-gray-50/70">
+        <ProfessionalNavbar />
+        <main className="max-w-4xl mx-auto px-4 py-20 text-center">
+          <div className="w-8 h-8 border-3 border-[#1a7a6e] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-sm text-gray-500">Loading quote to edit...</p>
+        </main>
+      </div>
+    );
+  }
 
   if (!quote) {
     return (
@@ -59,37 +142,6 @@ const EditQuote = () => {
     );
   }
 
-  const handleSubmit = async (data) => {
-    try {
-      setLoading(true);
-
-      const payload = {
-        amount: Number(data.amount),
-        message: data.message ? data.message.trim() : undefined,
-        estimatedDuration: {
-          value: Number(data.durationValue),
-          unit: data.durationUnit,
-        },
-        availableDate: data.availableDate || undefined,
-        availableTime: data.availableTime || undefined,
-      };
-
-      await updateQuote(id, payload);
-
-      toast.success("Quote updated successfully!");
-      navigate("/professional/quotes");
-    } catch (error) {
-      console.error("Failed to update quote:", error);
-      toast.error(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Failed to update quote."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const revisions = quote.revisions ? [...quote.revisions].reverse() : [];
 
   return (
@@ -118,70 +170,55 @@ const EditQuote = () => {
                 <QuoteStatus status={quote.status} />
               </div>
 
-              <h1 className="text-xl font-bold text-gray-900 mt-3 leading-snug">
-                {workRequest?.title || "Service Request"}
-              </h1>
+              <h2 className="text-lg font-bold text-gray-900 mt-3">
+                {workRequest?.title || "Requested Service"}
+              </h2>
 
-              {workRequest?.location?.city && (
-                <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1">
-                  <HiMapPin className="w-3.5 h-3.5 text-gray-400" />
-                  <span>{workRequest.location.city}</span>
+              {workRequest?.description && (
+                <p className="text-xs text-gray-500 mt-2 leading-relaxed line-clamp-4">
+                  {workRequest.description}
                 </p>
               )}
 
-              {workRequest?.description && (
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">
-                    Job Description
-                  </p>
-                  <p className="text-sm text-gray-600 leading-relaxed line-clamp-4">
-                    {workRequest.description}
-                  </p>
+              {workRequest?.location && (
+                <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-1.5 text-xs text-gray-600 font-medium">
+                  <HiMapPin className="w-4 h-4 text-gray-400 shrink-0" />
+                  <span className="truncate">
+                    {workRequest.location.city || workRequest.location.address || "Location provided"}
+                  </span>
                 </div>
               )}
-
-              {/* Price Details */}
-              <div className="mt-5 pt-5 border-t border-gray-100 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Original Quote:</span>
-                  <span className="text-sm font-bold text-gray-700">
-                    ₹{Number(quote.initialAmount || quote.amount).toLocaleString("en-IN")}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Active Quote Amount:</span>
-                  <span className="text-xl font-extrabold text-[#1a7a6e]">
-                    ₹{Number(quote.amount).toLocaleString("en-IN")}
-                  </span>
-                </div>
-
-                {workRequest?.budget?.min && (
-                  <div className="flex items-center justify-between text-xs text-gray-400">
-                    <span>Customer Budget:</span>
-                    <span>
-                      ₹{Number(workRequest.budget.min).toLocaleString("en-IN")} - ₹{Number(workRequest.budget.max).toLocaleString("en-IN")}
-                    </span>
-                  </div>
-                )}
-              </div>
             </section>
 
-            {/* Negotiation / Revision History if exists */}
+            {/* Current Proposal Info */}
+            <section className="bg-teal-50/50 border border-teal-100 rounded-2xl p-6 shadow-xs">
+              <span className="text-[11px] font-bold text-[#1a7a6e] uppercase tracking-wider block">
+                Current Active Price
+              </span>
+              <p className="text-3xl font-black text-[#1a7a6e] mt-1">
+                ₹{Number(quote.amount).toLocaleString("en-IN")}
+              </p>
+              <p className="text-xs text-teal-800/80 mt-2 leading-relaxed">
+                Updating your quote will record the previous price in revision history and mark this proposal as active negotiation.
+              </p>
+            </section>
+
+            {/* Revision History if exists */}
             {revisions.length > 0 && (
-              <section className="bg-white border border-gray-200/80 rounded-2xl p-6 shadow-xs space-y-3">
-                <div className="flex items-center gap-2">
+              <section className="bg-white border border-gray-200/80 rounded-2xl p-6 shadow-xs">
+                <div className="flex items-center gap-2 mb-3">
                   <HiArrowPath className="w-4 h-4 text-[#1a7a6e]" />
                   <h3 className="text-sm font-bold text-gray-900">
-                    Revision History ({revisions.length})
+                    Previous Versions ({revisions.length})
                   </h3>
                 </div>
-                <div className="space-y-3 mt-3">
-                  {revisions.map((rev, idx) => (
+
+                <div className="space-y-3">
+                  {revisions.map((rev, index) => (
                     <QuoteRevision
-                      key={idx}
+                      key={rev._id || rev.createdAt || index}
                       revision={rev}
-                      number={revisions.length - idx}
+                      number={revisions.length - index}
                     />
                   ))}
                 </div>
@@ -190,32 +227,34 @@ const EditQuote = () => {
           </div>
 
           {/* Right Column: Revision Form */}
-          <section className="lg:col-span-2 bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-8 shadow-xs">
-            <div className="border-b border-gray-100 pb-5 mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">
-                Revise Your Quote
-              </h2>
-              <p className="text-sm text-gray-500 mt-1">
-                Update your price or scheduling details based on discussions with the customer.
-              </p>
-            </div>
+          <div className="lg:col-span-2">
+            <section className="bg-white border border-gray-200/80 rounded-2xl p-6 sm:p-8 shadow-xs">
+              <div className="border-b border-gray-100 pb-5 mb-6">
+                <h1 className="text-xl font-bold text-gray-900">
+                  Revise Your Proposal
+                </h1>
+                <p className="text-xs text-gray-500 mt-1">
+                  Adjust your price or message based on conversations with the customer.
+                </p>
+              </div>
 
-            <QuoteForm
-              onSubmit={handleSubmit}
-              loading={loading}
-              initialData={{
-                initialAmount: quote.initialAmount || quote.amount || "",
-                amount: quote.amount || "",
-                message: quote.message || "",
-                durationValue: quote.estimatedDuration?.value || "",
-                durationUnit: quote.estimatedDuration?.unit || "hours",
-                availableDate: quote.availableDate
-                  ? quote.availableDate.split("T")[0]
-                  : "",
-                availableTime: quote.availableTime || "",
-              }}
-            />
-          </section>
+              <QuoteForm
+                initialData={{
+                  initialAmount: quote.amount,
+                  message: quote.message,
+                  durationValue: quote.estimatedDuration?.value,
+                  durationUnit: quote.estimatedDuration?.unit,
+                  availableDate: quote.availableDate
+                    ? new Date(quote.availableDate).toISOString().split("T")[0]
+                    : "",
+                  availableTime: quote.availableTime || "",
+                }}
+                onSubmit={handleSubmit}
+                loading={loading}
+                isEdit={true}
+              />
+            </section>
+          </div>
         </div>
       </main>
     </div>

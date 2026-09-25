@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { HiArrowLeft } from "react-icons/hi2";
@@ -28,7 +28,7 @@ const WorkRequestDetails = () => {
   const [deleting, setDeleting] = useState(false);
   const [fetchError, setFetchError] = useState(null);
 
-  const fetchRequest = () => {
+  const fetchRequest = useCallback(() => {
     setLoading(true);
     setFetchError(null);
 
@@ -58,12 +58,46 @@ const WorkRequestDetails = () => {
       .finally(() => {
         setLoading(false);
       });
-  };
+  }, [id]);
 
   useEffect(() => {
-    if (id) {
-      fetchRequest();
-    }
+    let mounted = true;
+    if (!id) return;
+
+    getWorkRequestById(id)
+      .then((response) => {
+        if (!mounted) return;
+        const rawData = response?.data;
+        const reqData = rawData?.data?._id
+          ? rawData.data
+          : rawData?._id
+          ? rawData
+          : rawData?.data || null;
+
+        if (!reqData) {
+          throw new Error("Work request details could not be found.");
+        }
+        setRequest(reqData);
+      })
+      .catch((error) => {
+        if (!mounted) return;
+        console.error("Failed to fetch work request:", error);
+        const msg =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to load work request details.";
+        setFetchError(msg);
+        toast.error(msg);
+      })
+      .finally(() => {
+        if (mounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
   }, [id]);
 
   const handleDelete = async () => {

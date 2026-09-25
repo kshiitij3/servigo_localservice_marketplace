@@ -7,6 +7,7 @@ import {
   HiSignal,
   HiArrowRight,
   HiChatBubbleBottomCenterText,
+  HiUserGroup,
 } from "react-icons/hi2";
 
 const JobCard = ({ job, distanceKm }) => {
@@ -38,6 +39,8 @@ const JobCard = ({ job, distanceKm }) => {
       ? `${distanceKm.toFixed(1)} km away`
       : `${job.visibilityRadius ?? 10} km radius`;
 
+  const quoteCount = job.quoteCount || (job.status === "QUOTED" ? 1 : 0);
+
   return (
     <div className="bg-white border border-gray-200/80 rounded-2xl p-5 sm:p-6 hover:shadow-md hover:border-[#1a7a6e]/40 transition-all flex flex-col justify-between shadow-xs">
       <div>
@@ -59,6 +62,15 @@ const JobCard = ({ job, distanceKm }) => {
               {job.category?.name && (
                 <span className="px-2.5 py-0.5 rounded-full bg-teal-50 text-[#1a7a6e] border border-teal-200/60 text-xs font-semibold">
                   {job.category.name}
+                </span>
+              )}
+
+              {quoteCount > 0 && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/70 text-xs font-semibold">
+                  <HiUserGroup className="w-3.5 h-3.5" />
+                  <span>
+                    {quoteCount} {quoteCount === 1 ? "Quote" : "Quotes"}
+                  </span>
                 </span>
               )}
             </div>

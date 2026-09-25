@@ -1,4 +1,4 @@
-import { HiBanknotes, HiClock, HiChatBubbleBottomCenterText } from "react-icons/hi2";
+import { HiClock, HiChatBubbleBottomCenterText } from "react-icons/hi2";
 
 const QuoteRevision = ({ revision, number }) => {
   const formatAmount = (amount) => {
