@@ -37,6 +37,12 @@ app.use(morgan("dev"));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Servigo API Running",
+  });
+});
 app.use("/api/health", healthRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/categories", categoryRoutes);
