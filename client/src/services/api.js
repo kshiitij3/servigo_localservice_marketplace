@@ -1,7 +1,15 @@
 import axios from "axios";
 
+const configuredApiUrl = (
+  import.meta.env.VITE_API_URL ||
+  "https://servigo-localservice-marketplace.onrender.com"
+).replace(/\/+$/, "");
+const apiBaseURL = configuredApiUrl.endsWith("/api/v1")
+  ? configuredApiUrl
+  : `${configuredApiUrl}/api/v1`;
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "https://servigo-localservice-marketplace.onrender.com",
+  baseURL: apiBaseURL,
   headers: {
     "Content-Type": "application/json",
   },
